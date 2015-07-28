@@ -1,0 +1,14 @@
+{
+	"collaborativeeditor.title": "Collaborative Pad",
+	"collaborativeeditor.new": "Create a pad",
+	"collaborativeeditor.save": "Save",
+	"collaborativeeditor.name": "Name",
+	"collaborativeeditor.description": "Description",
+	
+	"collaborativeeditor.read": "Reader",
+	"collaborativeeditor.contrib": "Contributor",
+	"collaborativeeditor.manager": "Manager",
+	
+	"collaborativeeditor.or.page.notfound.or.unauthorized": "The collaborative pad or the webpage requested either does not exists, either has been deleted, or you do not have permission to access it."
+	
+}

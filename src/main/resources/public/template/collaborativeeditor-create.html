@@ -1,0 +1,29 @@
+<article class="row">
+    <form name="form">
+        <div class="rigid-grid row">
+            <div class="two cell clip height-two">
+                <div class="absolute" loading-panel="upload-collaborativeeditor-thumbnail">
+                    <image-select ng-model="collaborativeeditor.thumbnail" default="/img/illustrations/collaborativeeditor-default.png"></image-select>
+                </div>
+            </div>
+            <div class="margin-two height-three">
+                <div class="twelve cell horizontal-spacing">
+                    <input type="text" ng-model="collaborativeeditor.name" class="twelve cell" i18n-placeholder="collaborativeeditor.name" required />
+                    <div class="row">
+                        <hr class="row" />
+                    </div>
+                    <textarea ng-model="collaborativeeditor.description" class="twelve cell" i18n-placeholder="collaborativeeditor.description" />
+                    <div class="row">
+                        <hr class="row" />
+                    </div>
+                </div>
+                <div class="row bottom-locked">
+                    <button ng-click="saveCollaborativeeditor()" class="right-magnet" ng-disabled="form.$invalid">
+                        <i18n>save</i18n>
+                    </button>
+                    <input type="button" class="button right-magnet cancel" ng-click="cancelCollaborativeeditorEdit()" i18n-value="cancel">
+                </div>
+            </div>
+        </div>
+    </form>
+</article>

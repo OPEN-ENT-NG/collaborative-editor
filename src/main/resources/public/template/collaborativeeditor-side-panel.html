@@ -1,0 +1,8 @@
+<nav class="vertical">
+    <h2 ng-click="openMainPage()"><i18n >collaborativeeditor.title</i18n></h2>
+    <ul>
+        <li ng-repeat="c in collaborativeeditors.all">
+            <a ng-click="openCollaborativeeditor(c, true)">[[c.name]]</a>
+        </li>
+    </ul>
+</nav>

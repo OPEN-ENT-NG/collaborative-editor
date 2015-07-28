@@ -1,0 +1,76 @@
+<div class="twelve cell" workflow="collaborativeeditor.list">
+    <div class="row rigid-grid">
+        <!-- Search bar -->
+        <div class="four cell">
+            <autocomplete
+                    workflow="collaborativeeditor.list"
+                    options="searchbar.collaborativeeditors"
+                    ng-change="openPageFromSearchbar(selectedCollaborativeeditor._id)"
+                    ng-model="selectedCollaborativeeditor">
+            </autocomplete>
+        </div>
+    </div>
+    
+    <div class="fallen dominos">
+        <div class="item" ng-repeat="c in collaborativeeditors.all">
+            <section class="domino cyan">
+                <div class="top" ng-click="openCollaborativeeditor(c)">
+                    <img class="absolute" skin-src="[[getCollaborativeeditorThumbnail(c)]]" />
+                </div>
+                <div class="bottom">
+                    <div class="content">
+                        <div class="cell" ng-click="openCollaborativeeditor(c)">
+                            <strong>[[c.name]]</strong>
+                            <br />[[c.owner.displayName]]
+                            <br />[[formatDate(c.modified)]]
+                        </div>
+                        <div ng-show="canManageCollaborativeeditor(c)" class="bottom-locked eleven vertical-spacing-twice">
+                            <input type="checkbox" data-ng-model="c.selected" class="right-magnet cell" />
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Allows to display a confirm dialog before deleting a collaborative editor -->
+    <div ng-if="display.confirmDeleteCollaborativeeditor">
+        <lightbox show="display.confirmDeleteCollaborativeeditor" on-close="cancelRemoveCollaborativeeditor()">
+            <p><i18n>collaborativeeditor.delete.confirm</i18n></p>
+            <p ng-repeat="collaborativeeditor in collaborativeeditors.selection()">[[collaborativeeditor.name]]</p>
+            <div class="row">
+                <button class="right-magnet" ng-click="removeCollaborativeeditor()"><i18n>remove</i18n></button>
+                <input type="button" class="cancel right-magnet" i18n-value="cancel" ng-click="cancelRemoveCollaborativeeditor()" />
+            </div>
+        </lightbox>
+    </div>
+   
+    <!-- Allows to display the panel to manage share rights -->
+    <div ng-if="display.showPanel">
+        <lightbox show="display.showPanel" on-close="display.showPanel = false;">
+            <share-panel app-prefix="'collaborativeeditor'" resources="collaborativeeditor"></share-panel>
+        </lightbox>
+    </div>
+</div>
+    
+<section class="toggle-buttons" ng-class="{ hide: collaborativeeditors.selection().length === 0 }">
+    <div class="toggle">
+        <div class="row">
+            <resource-right name="manage" resource="collaborativeeditors.selection()" class="cell">
+                <button ng-if="collaborativeeditors.selection().length === 1" ng-click="editCollaborativeeditor(collaborativeeditors.selection()[0], $event)">
+                    <i18n>properties</i18n>
+                </button>
+            </resource-right>
+            <resource-right name="manage" resource="collaborativeeditors.selection()" class="cell">
+                <button ng-click="shareCollaborativeeditor(collaborativeeditors.selection(), $event)">
+                    <i18n>share</i18n>
+                </button>
+            </resource-right>
+            <resource-right name="manage" resource="collaborativeeditors.selection()" class="cell">
+                <button ng-click="display.confirmDeleteCollaborativeeditor = true">
+                    <i18n>remove</i18n>
+                </button>
+            </resource-right>
+        </div>
+    </div>
+</section>
