@@ -68,6 +68,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         if (null == etherpadApiKey || etherpadApiKey.trim().isEmpty()) {
             log.error("[Collaborative Editor] Error : Module property 'etherpad-api-key' must be defined");
         }
+        log.error("[Collaborative Editor] apikey = [" + etherpadApiKey + "]");
         this.etherpadUrl = etherpadUrl;
         this.client = new EPLiteClient(etherpadUrl, etherpadApiKey);
     }
