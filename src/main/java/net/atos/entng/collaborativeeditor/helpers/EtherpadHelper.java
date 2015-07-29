@@ -44,9 +44,9 @@ public class EtherpadHelper extends MongoDbControllerHelper {
     private final EPLiteClient client;
 
     /**
-     * Etherpad URL
+     * Etherpad public URL
      */
-    private final String etherpadUrl;
+    private final String etherpadPublicUrl;
 
     /**
      * Mongo CRUD service
@@ -56,10 +56,11 @@ public class EtherpadHelper extends MongoDbControllerHelper {
     /**
      * Constructor
      * @param collection Mongo collection to request
-     * @param etherpadUrl Etherpad service URL
+     * @param etherpadUrl Etherpad service internal URL
      * @param etherpadApiKey Etherpad API key
+     * @param etherpadPublicUrl Etherpad service public URL
      */
-    public EtherpadHelper(String collection, String etherpadUrl, String etherpadApiKey) {
+    public EtherpadHelper(String collection, String etherpadUrl, String etherpadApiKey, String etherpadPublicUrl) {
         super(collection);
         this.etherpadCrudService = new MongoDbCrudService(collection);
         if (null == etherpadUrl || etherpadUrl.trim().isEmpty()) {
@@ -68,9 +69,14 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         if (null == etherpadApiKey || etherpadApiKey.trim().isEmpty()) {
             log.error("[Collaborative Editor] Error : Module property 'etherpad-api-key' must be defined");
         }
-        log.error("[Collaborative Editor] apikey = [" + etherpadApiKey + "]");
-        this.etherpadUrl = etherpadUrl;
+        if (null == etherpadPublicUrl || etherpadPublicUrl.trim().isEmpty()) {
+            this.etherpadPublicUrl = etherpadUrl;
+            log.error("[Collaborative Editor] Warning : Module property 'etherpad-public-url' is not defined. Using 'etherpad-url'...");
+        } else {
+            this.etherpadPublicUrl = etherpadPublicUrl;
+        }
         this.client = new EPLiteClient(etherpadUrl, etherpadApiKey);
+
     }
 
     @Override
@@ -123,7 +129,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                 String session = client.createSession(object.getString("epGroupID"), authorID, validUntil).get("sessionID").toString();
                                 request.response().putHeader("Set-Cookie", "sessionID=" + session + ";max-age=" + 2 * 360 * 1000 + ";path=/");
 
-                                object.putString("url", etherpadUrl + "/p/" + object.getString("epName"));
+                                object.putString("url", etherpadPublicUrl + "/p/" + object.getString("epName"));
                                 object.removeField("epGroupID");
                                 object.removeField("epName");
 
@@ -181,12 +187,12 @@ public class EtherpadHelper extends MongoDbControllerHelper {
 
                                 String userDisplayName = user.getFirstName() + " " + user.getLastName();
                                 try {
-                                    String urlReadOnlyStr = etherpadUrl + "/p/" + readOnlyId + "?userName=" + userDisplayName;
+                                    String urlReadOnlyStr = etherpadPublicUrl + "/p/" + readOnlyId + "?userName=" + userDisplayName;
                                     URL urlReadOnly = new URL(urlReadOnlyStr);
                                     URI uriReadOnly = new URI(urlReadOnly.getProtocol(), urlReadOnly.getUserInfo(), urlReadOnly.getHost(), urlReadOnly.getPort(), urlReadOnly.getPath(), urlReadOnly.getQuery(), urlReadOnly.getRef());
                                     jsonObject.putString("readOnlyUrl", uriReadOnly.toASCIIString());
 
-                                    String urlStr = etherpadUrl + "/p/" + jsonObject.getString("epName") + "?userName=" + userDisplayName;
+                                    String urlStr = etherpadPublicUrl + "/p/" + jsonObject.getString("epName") + "?userName=" + userDisplayName;
                                     URL url = new URL(urlStr);
                                     URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
 

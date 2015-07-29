@@ -12,7 +12,8 @@
     "integration-mode" : "HTTP",
     "app-registry.port" : 8012,
     "mode" : "${mode}",
-    "etherpad-url": "${host}/etherpad",
+    "etherpad-url": "http://etherpad:8102",
+    "etherpad-public-url": "${host}/etherpad",
     "etherpad-api-key" : "62cc0a3507b8ab13b3f641a07f93138d59880071af0e10f84d0f9e1937c76e97",
     "entcore.port" : 8009,
     "publicConf": {
