@@ -1,4 +1,3 @@
-console.log("Start loading model pad");
 /**
  * Model to create a collaborative editor.
  */
@@ -65,7 +64,6 @@ CollaborativeEditor.prototype.delete = function(callback) {
  */
 CollaborativeEditor.prototype.session = function(callback) {
     http().get('/collaborativeeditor/session/' + this._id).done(function() {
-        console.log("Session should be OK now");
         if(typeof callback === 'function'){
             callback();
         }
@@ -117,6 +115,3 @@ model.build = function() {
         behaviours: 'collaborativeeditor'
     });
 };
-
-
-console.log("End loading model pad");
