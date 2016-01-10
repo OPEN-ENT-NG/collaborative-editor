@@ -49,6 +49,11 @@ public class EtherpadHelper extends MongoDbControllerHelper {
     private final String etherpadPublicUrl;
 
     /**
+     * Etherpad domain for authentication cookie into collaborative-editor and pad service
+     */
+    private final String domain;
+
+    /**
      * Mongo CRUD service
      */
     private final CrudService etherpadCrudService;
@@ -60,7 +65,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
      * @param etherpadApiKey Etherpad API key
      * @param etherpadPublicUrl Etherpad service public URL
      */
-    public EtherpadHelper(String collection, String etherpadUrl, String etherpadApiKey, String etherpadPublicUrl) {
+    public EtherpadHelper(String collection, String etherpadUrl, String etherpadApiKey, String etherpadPublicUrl, String domain) {
         super(collection);
         this.etherpadCrudService = new MongoDbCrudService(collection);
         if (null == etherpadUrl || etherpadUrl.trim().isEmpty()) {
@@ -75,6 +80,13 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         } else {
             this.etherpadPublicUrl = etherpadPublicUrl;
         }
+
+        if (null == domain || domain.trim().isEmpty()) {
+            log.error("[Collaborative Editor] Error : Module property 'etherpad-domain' must be defined");
+        }
+
+        this.domain = domain;
+
         this.client = new EPLiteClient(etherpadUrl, etherpadApiKey);
 
     }
@@ -127,7 +139,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                 Date now = calendar.getTime();
                                 long validUntil = (now.getTime() + (2 * 60L * 60L * 1000L)) / 1000L;
                                 String session = client.createSession(object.getString("epGroupID"), authorID, validUntil).get("sessionID").toString();
-                                request.response().putHeader("Set-Cookie", "sessionID=" + session + ";max-age=" + 2 * 360 * 1000 + ";path=/");
+                                request.response().putHeader("Set-Cookie", "sessionID=" + session + ";max-age=" + 2 * 360 * 1000 + ";path=/;domain=" + domain);
 
                                 object.putString("url", etherpadPublicUrl + "/p/" + object.getString("epName"));
                                 object.removeField("epGroupID");
@@ -244,7 +256,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                 Date now = calendar.getTime();
                                 long validUntil = (now.getTime() + (1 * 60L * 60L * 1000L)) / 1000L;
                                 String session = client.createSession(object.getString("epGroupID"), authorID, validUntil).get("sessionID").toString();
-                                request.response().putHeader("Set-Cookie", "sessionID=" + session + ";max-age=" + 360 * 1000 + ";path=/").setStatusCode(200).end();
+                                request.response().putHeader("Set-Cookie", "sessionID=" + session + ";max-age=" + 360 * 1000 + ";path=/;domain=" + domain).setStatusCode(200).end();
                             } else {
                                 request.response().setStatusCode(404).end();
                             }
@@ -270,7 +282,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                 String sessionID = CookieHelper.get("sessionID", request);
                 if (sessionID != null) {
                     client.deleteSession(sessionID);
-                    request.response().putHeader("Set-Cookie", "sessionID=deleted;max-age=-1;path=/").setStatusCode(200).end();
+                    request.response().putHeader("Set-Cookie", "sessionID=deleted;max-age=-1;path=/;domain=" + domain).setStatusCode(200).end();
                 } else {
                     request.response().setStatusCode(200).end();
                 }
