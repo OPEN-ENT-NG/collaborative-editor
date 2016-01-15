@@ -21,7 +21,7 @@ routes.define(function($routeProvider){
  * @param template all templates.
  * @param model the collaborative editor model.
  */
-function CollaborativeEditorController($scope, template, model, route, $timeout, $sce) {
+function CollaborativeEditorController($scope, template, model, route, $timeout, $sce, $location) {
     $scope.template = template;
     $scope.collaborativeeditors = model.collaborativeEditors;
     $scope.me = model.me;
@@ -50,6 +50,10 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
 
     };
 
+	$scope.redirect = function(path){
+		$location.path(path);
+	};
+	
     /**
      * Allows to save the current edited collaborative editor in the scope. After saving the
      * current collaborative editor this method closes the edit view too.

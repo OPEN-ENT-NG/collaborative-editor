@@ -14,12 +14,12 @@
     <div class="fallen dominos">
         <div class="item" ng-repeat="c in collaborativeeditors.all">
             <section class="domino cyan">
-                <div class="top" ng-click="openCollaborativeeditor(c)">
+                <div class="top" ng-click="redirect('/view/' + c._id)">
                     <img class="absolute" skin-src="[[getCollaborativeeditorThumbnail(c)]]" />
                 </div>
                 <div class="bottom">
                     <div class="content">
-                        <div class="cell" ng-click="openCollaborativeeditor(c)">
+                        <div class="cell" ng-click="redirect('/view/' + c._id)">
                             <strong>[[c.name]]</strong>
                             <br />[[c.owner.displayName]]
                             <br />[[formatDate(c.modified)]]
