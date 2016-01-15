@@ -16,7 +16,10 @@
             <div class="row">
                 <div class="twelve cell">
                     <div class="seven cell">
-                        <h1>
+                        <h1 ng-if="!collaborativeeditor || !collaborativeeditor._id">
+                            <a ng-click="openMainPage()"><i18n >collaborativeeditor.title</i18n></a>
+                        </h1>
+                        <h2 ng-if="collaborativeeditor && collaborativeeditor._id">
                             <i class="collaborativeeditor">
                                 <side-panel ng-if="selectedCollaborativeeditor">
                                     <container template="side-panel"></container>
@@ -26,7 +29,7 @@
                             <span ng-if="selectedCollaborativeeditor.name && selectedCollaborativeeditor.name.trim().length > 0">
                                 : [[collaborativeeditor.name]]
                             </span>
-                        </h1>
+                        </h2>
                     </div>
                     <div class="contextual-buttons five cell">
                         <button workflow="collaborativeeditor.create" ng-if="!collaborativeeditor || !collaborativeeditor._id" ng-click="newCollaborativeeditor()" class="cell right-magnet">
@@ -36,7 +39,7 @@
                 </div>
                 <div class="clear"></div>
             </div>
-            <hr>
+
 		    <section id="collaborativeeditor-content">
                     <container template="main" class="flexible content cell"></container>
                     <container template="collaborativeeditor" class="flexible navigation" ng-class="{ 'empty-neighbour': template.isEmpty('main'), 'filled-neighbour': !template.isEmpty('main') }"></container>
