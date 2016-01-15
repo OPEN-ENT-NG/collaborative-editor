@@ -111,13 +111,7 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
     @ApiDoc("Allows to update a collaborative editor associated to the given identifier")
     @SecuredAction(value = "collaborativeeditor.contrib", type = ActionType.RESOURCE)
     public void update(final HttpServerRequest request) {
-        RequestUtils.bodyToJson(request, pathPrefix + "collaborativeeditor", new Handler<JsonObject>() {
-
-            @Override
-            public void handle(JsonObject event) {
-                CollaborativeEditorController.super.update(request);
-            }
-        });
+       super.update(request);
     }
 
     @Override
