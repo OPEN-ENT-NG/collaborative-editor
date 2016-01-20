@@ -5,7 +5,7 @@
     "port" : 8668,
     "app-name" : "Collaborative Editor",
     "app-address" : "/collaborativeeditor",
-    "app-icon" : "collaborativeeditor-large",
+    "app-icon" : "pad-large",
     "host": "${host}",
     "ssl" : $ssl,
     "userbook-host": "${host}",
