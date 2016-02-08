@@ -81,7 +81,12 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
     @ApiDoc("Allows to create a new editor")
     @SecuredAction("collaborativeeditor.create")
     public void create(final HttpServerRequest request) {
-        etherpadHelper.create(request);
+        RequestUtils.bodyToJson(request, pathPrefix + "collaborativeeditor", new Handler<JsonObject>() {
+            @Override
+            public void handle(JsonObject event) {
+                etherpadHelper.create(request);
+            }
+        });
     }
 
     @Override
@@ -111,7 +116,12 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
     @ApiDoc("Allows to update a collaborative editor associated to the given identifier")
     @SecuredAction(value = "collaborativeeditor.contrib", type = ActionType.RESOURCE)
     public void update(final HttpServerRequest request) {
-       super.update(request);
+        RequestUtils.bodyToJson(request, pathPrefix + "collaborativeeditor", new Handler<JsonObject>() {
+            @Override
+            public void handle(JsonObject event) {
+                CollaborativeEditorController.super.update(request);
+            }
+        });
     }
 
     @Override
