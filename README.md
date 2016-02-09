@@ -1,6 +1,6 @@
 # À propos de l'application PAD (collaborative-editor)
 
-* Licence : non libéré pour le moment - Copyright Conseil Régional de Picardie
+* Licence : [AGPL v3](http://www.gnu.org/licenses/agpl.txt) - Copyright Conseil Régional Nord Pas de Calais Picardie
 * Développeur : ATOS
 * Financeur : Région Picardie
 * Description : Application d'éditeur de texte collaboratif (Pad) qui s'appuie sur https://github.com/ether/etherpad-lite embarqué
