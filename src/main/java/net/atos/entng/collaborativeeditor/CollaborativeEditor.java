@@ -2,9 +2,11 @@ package net.atos.entng.collaborativeeditor;
 
 import net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorController;
 
+import net.atos.entng.collaborativeeditor.events.CollaborativeEditorSearchingEvents;
 import org.entcore.common.http.BaseServer;
 import org.entcore.common.http.filter.ShareAndOwner;
 import org.entcore.common.mongodb.MongoDbConf;
+import org.entcore.common.service.impl.MongoDbSearchService;
 
 /**
  * Server to manage collaborative editors. This class is the entry point of the Vert.x module.
@@ -29,7 +31,8 @@ public class CollaborativeEditor extends BaseServer {
 
         setDefaultResourceFilter(new ShareAndOwner());
         addController(new CollaborativeEditorController(vertx.eventBus(), COLLABORATIVEEDITOR_COLLECTION, container));
-
+        // Subscribe to events published for searching
+        setSearchingEvents(new CollaborativeEditorSearchingEvents(new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION),
+                config.getString("etherpad-public-url", config.getString("etherpad-url", "")), config.getString("etherpad-api-key","")));
     }
-
 }
