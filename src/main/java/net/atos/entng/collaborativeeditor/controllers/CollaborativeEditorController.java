@@ -1,10 +1,11 @@
 package net.atos.entng.collaborativeeditor.controllers;
 
-import java.util.Map;
-
+import fr.wseduc.rs.*;
+import fr.wseduc.security.ActionType;
+import fr.wseduc.security.SecuredAction;
+import fr.wseduc.webutils.request.RequestUtils;
 import net.atos.entng.collaborativeeditor.CollaborativeEditor;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
-
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.mongodb.MongoDbControllerHelper;
@@ -12,20 +13,12 @@ import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
-import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.platform.Container;
 
-import fr.wseduc.rs.ApiDoc;
-import fr.wseduc.rs.Delete;
-import fr.wseduc.rs.Get;
-import fr.wseduc.rs.Post;
-import fr.wseduc.rs.Put;
-import fr.wseduc.security.ActionType;
-import fr.wseduc.security.SecuredAction;
-import fr.wseduc.webutils.request.RequestUtils;
+import java.util.Map;
 
 /**
  * Controller to manage URL paths for collaborative editors.
@@ -50,13 +43,13 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
 
     /**
      * Default constructor
-     * @param eb VertX event bus
+     * @param vertx vertx
      * @param collection MongoDB collection to request.
      */
-    public CollaborativeEditorController(EventBus eb, String collection, Container container) {
+    public CollaborativeEditorController(Vertx vertx, String collection, Container container) {
         super(collection);
         JsonObject config = container.config();
-        this.etherpadHelper = new EtherpadHelper(collection, config.getString("etherpad-url", null), config.getString("etherpad-api-key", null), config.getString("etherpad-public-url", null),config.getString("etherpad-domain", null));
+        this.etherpadHelper = new EtherpadHelper(vertx, collection, config.getString("etherpad-url", null), config.getString("etherpad-api-key", null), config.getString("etherpad-public-url", null),config.getString("etherpad-domain", null));
     }
 
     @Get("")

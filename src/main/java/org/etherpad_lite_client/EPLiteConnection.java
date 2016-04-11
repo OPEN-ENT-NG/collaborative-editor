@@ -1,20 +1,20 @@
 package org.etherpad_lite_client;
 
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.vertx.java.core.Handler;
+import org.vertx.java.core.Vertx;
+import org.vertx.java.core.http.HttpClient;
+import org.vertx.java.core.http.HttpClientRequest;
+import org.vertx.java.core.http.HttpClientResponse;
+import org.vertx.java.core.json.JsonObject;
+
+import javax.net.ssl.*;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  * Connection object for talking to and parsing responses from the Etherpad Lite Server.
@@ -41,88 +41,107 @@ public class EPLiteConnection {
      */
     public String apiVersion;
 
+    private final HttpClient httpClient;
+
     /**
      * Initializes a new org.etherpad_lite_client.EPLiteConnection object.
+     * @param vertx vertx
      * @param url an absolute url, including protocol, to the EPL api
      * @param apiKey the API Key
      * @param apiVersion the API version
      */
-    public EPLiteConnection(String url, String apiKey, String apiVersion) {
+    public EPLiteConnection(Vertx vertx, String url, String apiKey, String apiVersion) {
         this.uri = URI.create(url);
         this.apiKey = apiKey;
         this.apiVersion = apiVersion;
+        final int port = (uri.getPort() > 0) ? uri.getPort() : ("https".equals(uri.getScheme()) ? 443 : 80);
+
+        this.httpClient = vertx.createHttpClient()
+                .setHost(uri.getHost())
+                .setPort(port)
+                .setMaxPoolSize(16)
+                .setSSL("https".equals(uri.getScheme()))
+                .setKeepAlive(false);
     }
 
     /**
      * GETs from the HTTP JSON API.
-     * @param apiMethod the name of the API method to call
-     * @return HashMap
      */
-    public HashMap get(String apiMethod) {
-        return this.get(apiMethod, new HashMap());
+    public void get(String apiMethod, final Handler<JsonObject> handler) {
+        this.get(apiMethod, new HashMap(), handler);
     }
 
     /**
      * GETs from the HTTP JSON API.
-     * @param apiMethod the name of the API method to call
-     * @param apiArgs a HashMap of url/form parameters. apikey will be set automatically
-     * @return HashMap
      */
-    public HashMap get(String apiMethod, HashMap apiArgs) {
+    public void get(String apiMethod, HashMap apiArgs, final Handler<JsonObject> handler) {
         String path = this.apiPath(apiMethod);
         String query = this.queryString(apiArgs);
         URL url = apiUrl(path, query);
-        Request request = new GETRequest(url);
-        return this.call(request);
+
+        this.callGet(url, handler);
     }
 
     /**
      * POSTs to the HTTP JSON API.
-     * @param apiMethod the name of the API method to call
-     * @return HashMap
      */
-    public HashMap post(String apiMethod) {
-        return this.post(apiMethod, new HashMap());
+    public void post(String apiMethod, final Handler<JsonObject> handler) {
+        this.post(apiMethod, new HashMap(), handler);
     }
 
     /**
      * POSTs to the HTTP JSON API.
-     * @param apiMethod the name of the API method to call
-     * @param apiArgs a HashMap of url/form parameters. apikey will be set automatically
-     * @return HashMap
      */
-    public HashMap post(String apiMethod, HashMap apiArgs) {
+    public void post(String apiMethod, HashMap apiArgs,  final Handler<JsonObject> handler) {
         String path = this.apiPath(apiMethod);
         String query = this.queryString(apiArgs);
-        URL url = apiUrl(path, null);
-        Request request = new POSTRequest(url, query);
-        return this.call(request);
+        URL url = apiUrl(path, query);
+
+        this.callPost(url, handler);
     }
 
     /**
      * Calls the HTTP JSON API.
-     * @param request the request object to send
-     * @return HashMap
      */
-    private HashMap call(Request request) {
+    private void callPost(final URL url, final Handler<JsonObject> handler) {
         trustServerAndCertificate();
 
-        try {
-            String response = request.send();
-            return this.handleResponse(response);
-        } catch (EPLiteException e) {
-            throw new EPLiteException(e.getMessage());
-        } catch (Exception e) {
-            throw new EPLiteException("Unable to connect to Etherpad Lite instance (" + e.getClass() + "): " + e.getMessage());
-        }
+        HttpClientRequest req = httpClient.post(url.toString(), new Handler<HttpClientResponse>() {
+            @Override
+            public void handle(final HttpClientResponse response) {
+                if (response.statusCode() == 200) {
+                    handleResponse(response.statusMessage(), handler);
+                } else {
+                    handler.handle(new JsonObject().putString("status", "error"));
+                }
+            }
+        });
+        req.end();
+    }
+
+    /**
+     * Calls the HTTP JSON API.
+     */
+    private void callGet(final URL url, final Handler<JsonObject> handler) {
+        trustServerAndCertificate();
+
+        HttpClientRequest req = httpClient.get(url.toString(), new Handler<HttpClientResponse>() {
+            @Override
+            public void handle(final HttpClientResponse response) {
+                if (response.statusCode() == 200) {
+                    handleResponse(response.statusMessage(), handler);
+                } else {
+                    handler.handle(new JsonObject().putString("status", "error"));
+                }
+            }
+        });
+        req.end();
     }
 
     /**
      * Converts the API resonse's JSON string into a HashMap.
-     * @param jsonString a valid JSON string
-     * @return HashMap
      */
-    private HashMap handleResponse(String jsonString) {
+    private void handleResponse(String jsonString,  final Handler<JsonObject> handler) {
         try {
             JSONParser parser = new JSONParser();
             Map response = (Map) parser.parse(jsonString);
@@ -130,39 +149,41 @@ public class EPLiteConnection {
             if (!response.get("code").equals(null)) {
                 int code = ((Long) response.get("code")).intValue();
                 switch (code) {
-                // Valid code, parse the response
+                    // Valid code, parse the response
                     case CODE_OK:
-                        HashMap data = (HashMap) response.get("data");
-                        return data != null ? data : new HashMap();
+                        handler.handle(new JsonObject((HashMap) response.get("data")).putString("status", "ok"));
                         // Invalid code, throw an exception with the message
                     case CODE_INVALID_PARAMETERS:
                     case CODE_INVALID_API_KEY:
                     case CODE_INVALID_METHOD:
-                        throw new EPLiteException((String) response.get("message"));
+                        handler.handle(new JsonObject().putString("status", "error").putString("message", (String)response.get("message")));
+
                     default:
-                        throw new EPLiteException("An unknown error has occurred while handling the response: " + jsonString);
+                        handler.handle(new JsonObject().putString("status", "error").putString("message",
+                                "An unknown error has occurred while handling the response: " + jsonString));
                 }
                 // No response code, something's really wrong
             } else {
-                throw new EPLiteException("An unknown error has occurred while handling the response: " + jsonString);
+                handler.handle(new JsonObject().putString("status", "error").putString("message",
+                        "An unknown error has occurred while handling the response: " + jsonString));
             }
         } catch (ParseException e) {
+            //TODO log api :  never use system log
             System.err.println("Unable to parse JSON response (" + jsonString + "): " + e.getMessage());
-            return new HashMap();
+            handler.handle(new JsonObject().putString("status", "error").putString("message",
+                    "Unable to parse JSON response (" + jsonString + "): " + e.getMessage()));
         }
     }
 
     /**
      * Returns the URL for the api path and query.
-     * @param path the api path
-     * @param query the query string (may be null)
-     * @return URL
      */
     private URL apiUrl(String path, String query) {
         try {
             URL url = new URL(new URI(this.uri.getScheme(), null, this.uri.getHost(), this.uri.getPort(), path, query, null).toString());
             return url;
         } catch (Exception e) {
+            //TODO log apui CORE
             throw new EPLiteException("Unable to connect to Etherpad Lite instance (" + e.getClass() + "): " + e.getMessage());
         }
     }

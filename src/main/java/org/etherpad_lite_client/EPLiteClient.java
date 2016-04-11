@@ -1,18 +1,14 @@
 package org.etherpad_lite_client;
 
+import org.vertx.java.core.Handler;
+import org.vertx.java.core.Vertx;
+import org.vertx.java.core.json.JsonObject;
+
 import java.util.Date;
 import java.util.HashMap;
 
 /**
- * A client for talking to Etherpad Lite's HTTP JSON API.<br />
- * <br />
- * Example:<br />
- * <br />
- * <code>
- * EPLiteClient api = new EPLiteClient("http://etherpad.mysite.com", "FJ7jksalksdfj83jsdflkj");<br />
- * HashMap pad = api.getText("my_pad");<br />
- * String pad = pad.get("text").toString();
- * </code>
+ * A non-blocking client for talking to Etherpad Lite's HTTP JSON API.<br />
  */
 public class EPLiteClient {
     /**
@@ -28,22 +24,17 @@ public class EPLiteClient {
     /**
      * Initializes a new org.etherpad_lite_client.EPLiteClient object. The default Etherpad Lite API version (in
      * DEFAULT_API_VERSION) will be used.
-     * @param url an absolute url, including protocol, to the EPL api
-     * @param apiKey the API Key
      */
-    public EPLiteClient(String url, String apiKey) {
-        this.connection = new EPLiteConnection(url, apiKey, DEFAULT_API_VERSION);
+    public EPLiteClient(Vertx vertx, String url, String apiKey) {
+        this.connection = new EPLiteConnection(vertx, url, apiKey, DEFAULT_API_VERSION);
     }
 
     /**
      * Initializes a new org.etherpad_lite_client.EPLiteClient object. The specified Etherpad Lite API version will be
      * used.
-     * @param url an absolute url, including protocol, to the EPL api
-     * @param apiKey the API Key
-     * @param apiVersion the API version
      */
-    public EPLiteClient(String url, String apiKey, String apiVersion) {
-        this.connection = new EPLiteConnection(url, apiKey, apiVersion);
+    public EPLiteClient(Vertx vertx, String url, String apiKey, String apiVersion) {
+        this.connection = new EPLiteConnection(vertx, url, apiKey, apiVersion);
     }
 
     // Groups
@@ -52,77 +43,65 @@ public class EPLiteClient {
 
     /**
      * Creates a new Group. The group id is returned in "groupID" in the HashMap.
-     * @return HashMap
      */
-    public HashMap createGroup() {
-        return this.connection.post("createGroup");
+    public void createGroup(final Handler<JsonObject> handler) {
+        this.connection.post("createGroup", handler);
     }
 
     /**
      * Creates a new Group for groupMapper if one doesn't already exist. Helps you map your application's groups to
      * Etherpad Lite's groups. The group id is returned in "groupID" in the HashMap.
-     * @param groupMapper your group mapper string
-     * @return HashMap
      */
-    public HashMap createGroupIfNotExistsFor(String groupMapper) {
+    public void createGroupIfNotExistsFor(String groupMapper, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("groupMapper", groupMapper);
-        return this.connection.post("createGroupIfNotExistsFor", args);
+        this.connection.post("createGroupIfNotExistsFor", args, handler);
     }
 
     /**
      * Delete group.
-     * @param groupID string
      */
-    public void deleteGroup(String groupID) {
+    public void deleteGroup(String groupID, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("groupID", groupID);
-        this.connection.post("deleteGroup", args);
+        this.connection.post("deleteGroup", args, handler);
     }
 
     /**
      * List all the padIDs in a group. They will be in an array inside "padIDs".
-     * @param groupID string
-     * @return HashMap
      */
-    public HashMap listPads(String groupID) {
+    public void listPads(String groupID, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("groupID", groupID);
-        return this.connection.get("listPads", args);
+        this.connection.get("listPads", args, handler);
     }
 
     /**
      * Create a pad in this group.
-     * @param groupID string
-     * @param padName string
      */
-    public HashMap createGroupPad(String groupID, String padName) {
+    public void createGroupPad(String groupID, String padName, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("groupID", groupID);
         args.put("padName", padName);
-        return this.connection.post("createGroupPad", args);
+        this.connection.post("createGroupPad", args, handler);
     }
 
     /**
      * Create a pad in this group.
-     * @param groupID string
-     * @param padName string
-     * @param text string
      */
-    public void createGroupPad(String groupID, String padName, String text) {
+    public void createGroupPad(String groupID, String padName, String text, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("groupID", groupID);
         args.put("padName", padName);
         args.put("text", text);
-        this.connection.post("createGroupPad", args);
+        this.connection.post("createGroupPad", args, handler);
     }
 
     /**
      * Lists all existing groups. The group ids are returned in "groupIDs".
-     * @return HashMap
      */
-    public HashMap listAllGroups() {
-        return this.connection.get("listAllGroups");
+    public void listAllGroups(final Handler<JsonObject> handler) {
+        this.connection.get("listAllGroups", handler);
     }
 
     // Authors
@@ -131,69 +110,57 @@ public class EPLiteClient {
 
     /**
      * Create a new author.
-     * @return HashMap
      */
-    public HashMap createAuthor() {
-        return this.connection.post("createAuthor");
+    public void createAuthor(final Handler<JsonObject> handler) {
+        this.connection.post("createAuthor", handler);
     }
 
     /**
      * Create a new author with the given name. The author id is returned in "authorID".
-     * @param name string
-     * @return HashMap
      */
-    public HashMap createAuthor(String name) {
+    public void createAuthor(String name, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("name", name);
-        return this.connection.post("createAuthor", args);
+        this.connection.post("createAuthor", args, handler);
     }
 
     /**
      * Creates a new Author for authorMapper if one doesn't already exist. Helps you map your application's authors to
      * Etherpad Lite's authors. The author id is returned in "authorID".
-     * @param authorMapper string
-     * @return HashMap
      */
-    public HashMap createAuthorIfNotExistsFor(String authorMapper) {
+    public void createAuthorIfNotExistsFor(String authorMapper, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("authorMapper", authorMapper);
-        return this.connection.post("createAuthorIfNotExistsFor", args);
+        this.connection.post("createAuthorIfNotExistsFor", args, handler);
     }
 
     /**
      * Creates a new Author for authorMapper if one doesn't already exist. Helps you map your application's authors to
      * Etherpad Lite's authors. The author id is returned in "authorID".
-     * @param authorMapper string
-     * @param name string
-     * @return HashMap
      */
-    public HashMap createAuthorIfNotExistsFor(String authorMapper, String name) {
+    public void createAuthorIfNotExistsFor(String authorMapper, String name, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("authorMapper", authorMapper);
         args.put("name", name);
-        return this.connection.post("createAuthorIfNotExistsFor", args);
+        this.connection.post("createAuthorIfNotExistsFor", args, handler);
     }
 
     /**
      * List the ids of pads the author has edited. They will be in an array inside "padIDs".
-     * @param authorId the authors's id string
-     * @return HashMap
      */
-    public HashMap listPadsOfAuthor(String authorId) {
+    public void listPadsOfAuthor(String authorId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("authorID", authorId);
-        return this.connection.get("listPadsOfAuthor", args);
+        this.connection.get("listPadsOfAuthor", args, handler);
     }
 
     /**
      * Returns the Author Name of the author.
-     * @param authorId the author's id string
-     * @return String
      */
-    public String getAuthorName(String authorId) {
+    public void getAuthorName(String authorId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("authorID", authorId);
-        return this.connection.get("getAuthorName", args).toString();
+        this.connection.get("getAuthorName", args, handler);
     }
 
     // Sessions
@@ -208,201 +175,136 @@ public class EPLiteClient {
     /**
      * Create a new session for the given author in the given group, valid until the given UNIX time. The session id
      * will be returned in "sessionID".<br />
-     * <br />
-     * Example:<br />
-     * <br />
-     * <code>
-     * import java.util.Date;<br />
-     * ...<br />
-     * Date now = new Date();<br />
-     * long in1Hour = (now.getTime() + (60L * 60L * 1000L) / 1000L);<br />
-     * String sessID1 = api.createSession(groupID, authorID, in1Hour).get("sessionID").toString();
-     * </code>
-     * @param groupID string
-     * @param authorID string
-     * @param validUntil long UNIX timestamp <strong>in seconds</strong>
-     * @return HashMap
      */
-    public HashMap createSession(String groupID, String authorID, long validUntil) {
+    public void createSession(String groupID, String authorID, long validUntil, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("groupID", groupID);
         args.put("authorID", authorID);
         args.put("validUntil", String.valueOf(validUntil));
-        return this.connection.post("createSession", args);
+        this.connection.post("createSession", args, handler);
     }
 
     /**
      * Create a new session for the given author in the given group valid for the given number of hours. The session id
      * will be returned in "sessionID".<br />
-     * <br />
-     * Example:<br />
-     * <br />
-     * <code>
-     * // in 2 hours<br />
-     * String sessID1 = api.createSession(groupID, authorID, 2).get("sessionID").toString();
-     * </code>
-     * @param groupID string
-     * @param authorID string
-     * @param validUntil int length of session in hours
-     * @return HashMap
      */
-    public HashMap createSession(String groupID, String authorID, int length) {
+    public void createSession(String groupID, String authorID, int length, final Handler<JsonObject> handler) {
         long inNHours = ((new Date()).getTime() + (length * 60L * 60L * 1000L)) / 1000L;
-        return this.createSession(groupID, authorID, inNHours);
+        this.createSession(groupID, authorID, inNHours, handler);
     }
 
     /**
      * Create a new session for the given author in the given group, valid until the given datetime. The session id will
      * be returned in "sessionID".<br />
-     * <br />
-     * Example:<br />
-     * <br />
-     * <code>
-     * import java.util.Date;<br />
-     * import java.text.DateFormat;<br />
-     * import java.text.SimpleDateFormat;<br />
-     * import java.util.TimeZone;<br />
-     * ...<br />
-     * DateFormat dfm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");<br />
-     * dfm.setTimeZone(TimeZone.getTimeZone("GMT-5"));<br />
-     * Date longTime = dfm.parse("2056-01-15 20:15:00");<br />
-     * String sessID = api.createSession(groupID, authorID, longTime).get("sessionID").toString();
-     * </code>
-     * @param groupID string
-     * @param authorID string
-     * @param validUntil Date
-     * @return HashMap
      */
-    public HashMap createSession(String groupID, String authorID, Date validUntil) {
+    public void createSession(String groupID, String authorID, Date validUntil, final Handler<JsonObject> handler) {
         long seconds = validUntil.getTime() / 1000L;
-        return this.createSession(groupID, authorID, seconds);
+        this.createSession(groupID, authorID, seconds, handler);
     }
 
     /**
      * Delete a session.
-     * @param sessionID string
      */
-    public void deleteSession(String sessionID) {
+    public void deleteSession(String sessionID, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("sessionID", sessionID);
-        this.connection.post("deleteSession", args);
+        this.connection.post("deleteSession", args, handler);
     }
 
     /**
      * Returns information about a session: authorID, groupID and validUntil.
-     * @param sessionID string
-     * @return HashMap
      */
-    public HashMap getSessionInfo(String sessionID) {
+    public void getSessionInfo(String sessionID, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("sessionID", sessionID);
-        return this.connection.get("getSessionInfo", args);
+        this.connection.get("getSessionInfo", args, handler);
     }
 
     /**
      * List all the sessions IDs in a group. Returned as a HashMap of sessionIDs keys, with values of HashMaps
      * containing groupID, authorID, and validUntil.
-     * @param groupID string
-     * @return HashMap
      */
-    public HashMap listSessionsOfGroup(String groupID) {
+    public void listSessionsOfGroup(String groupID, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("groupID", groupID);
-        return this.connection.get("listSessionsOfGroup", args);
+        this.connection.get("listSessionsOfGroup", args, handler);
     }
 
     /**
      * List all the sessions IDs belonging to an author. Returned as a HashMap of sessionIDs keys, with values of
      * HashMaps containing groupID, authorID, and validUntil.
-     * @param authorID string
-     * @return HashMap
      */
-    public HashMap listSessionsOfAuthor(String authorID) {
+    public void listSessionsOfAuthor(String authorID, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("authorID", authorID);
-        return this.connection.get("listSessionsOfAuthor", args);
+        this.connection.get("listSessionsOfAuthor", args, handler);
     }
 
     // Pad content
 
     /**
      * Returns a list of all pads.
-     * @return HashMap
      */
-    public HashMap listAllPads() {
-        return this.connection.get("listAllPads");
+    public void listAllPads(final Handler<JsonObject> handler) {
+        this.connection.get("listAllPads", handler);
     }
 
     /**
      * Returns a HashMap containing the latest revision of the pad's text. The text is stored under "text".
-     * @param padId the pad's id string
-     * @return HashMap
      */
-    public HashMap getText(String padId) {
+    public void getText(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        return this.connection.get("getText", args);
+        this.connection.get("getText", args, handler);
     }
 
     /**
      * Returns a HashMap containing the a specific revision of the pad's text. The text is stored under "text".
-     * @param padId the pad's id string
-     * @param rev the revision number
-     * @return HashMap
      */
-    public HashMap getText(String padId, int rev) {
+    public void getText(String padId, int rev, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
         args.put("rev", new Integer(rev));
-        return this.connection.get("getText", args);
+        this.connection.get("getText", args, handler);
     }
 
     /**
      * Creates a new revision with the given text (or creates a new pad).
-     * @param padId the pad's id string
-     * @param text the pad's new text
      */
-    public void setText(String padId, String text) {
+    public void setText(String padId, String text, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
         args.put("text", text);
-        this.connection.post("setText", args);
+        this.connection.post("setText", args, handler);
     }
 
     /**
      * Returns a HashMap containing the current revision of the pad's text as HTML. The html is stored under "html".
-     * @param padId the pad's id string
-     * @return HashMap
      */
-    public HashMap getHTML(String padId) {
+    public void getHTML(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        return this.connection.get("getHTML", args);
+        this.connection.get("getHTML", args, handler);
     }
 
     /**
      * Returns a HashMap containing the a specific revision of the pad's text as HTML. The html is stored under "html".
-     * @param padId the pad's id string
-     * @param rev the revision number
-     * @return HashMap
      */
-    public HashMap getHTML(String padId, int rev) {
+    public void getHTML(String padId, int rev, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
         args.put("rev", new Integer(rev));
-        return this.connection.get("getHTML", args);
+        this.connection.get("getHTML", args, handler);
     }
 
     /**
      * Creates a new revision with the given html (or creates a new pad).
-     * @param padId the pad's id string
-     * @param html the pad's new html text
      */
-    public void setHTML(String padId, String html) {
+    public void setHTML(String padId, String html, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
         args.put("html", html);
-        this.connection.post("setHTML", args);
+        this.connection.post("setHTML", args, handler);
     }
 
     // Pads
@@ -412,178 +314,138 @@ public class EPLiteClient {
 
     /**
      * Create a new pad.
-     * @param padId the pad's id string
      */
-    public void createPad(String padId) {
+    public void createPad(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        this.connection.post("createPad", args);
+        this.connection.post("createPad", args, handler);
     }
 
     /**
      * Create a new pad with the given initial text.
-     * @param padId the pad's id string
-     * @param text the initial text string
      */
-    public void createPad(String padId, String text) {
+    public void createPad(String padId, String text, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
         args.put("text", text);
-        this.connection.post("createPad", args);
+        this.connection.post("createPad", args, handler);
     }
 
     /**
      * Returns the number of revisions of this pad. The number is in "revisions".
-     * @param padId the pad's id string
-     * @return HashMap
      */
-    public HashMap getRevisionsCount(String padId) {
+    public void getRevisionsCount(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        return this.connection.get("getRevisionsCount", args);
+        this.connection.get("getRevisionsCount", args, handler);
     }
 
     /**
      * List the ids of authors who have edited a pad. They will be in an array inside "authorIDs".
-     * @param padId the pad's id string
-     * @return HashMap
      */
-    public HashMap listAuthorsOfPad(String padId) {
+    public void listAuthorsOfPad(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        return this.connection.get("listAuthorsOfPad", args);
+        this.connection.get("listAuthorsOfPad", args, handler);
     }
 
     /**
      * Deletes a pad.
-     * @param padId the pad's id string
      */
-    public void deletePad(String padId) {
+    public void deletePad(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        this.connection.post("deletePad", args);
+        this.connection.post("deletePad", args, handler);
     }
 
     /**
      * Get the pad's read-only id. The id will be in "readOnlyID".
-     * @param padId the pad's id string
-     * @return HashMap
      */
-    public HashMap getReadOnlyID(String padId) {
+    public void getReadOnlyID(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        return this.connection.get("getReadOnlyID", args);
+        this.connection.get("getReadOnlyID", args, handler);
     }
 
     /**
      * Get the pad's last edit date as a Unix timestamp. The timestamp will be in "lastEdited".
-     * @param padId the pad's id string
-     * @return HashMap
      */
-    public HashMap getLastEdited(String padId) {
+    public void getLastEdited(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        return this.connection.get("getLastEdited", args);
+        this.connection.get("getLastEdited", args, handler);
     }
 
     /**
      * Get the number of users currently editing a pad.
-     * @param padId the pad's id string
-     * @return Long
      */
-    public Long padUsersCount(String padId) {
+    public void padUsersCount(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        Long userCount = (Long) this.connection.get("padUsersCount", args).get("padUsersCount");
-        return userCount;
+        this.connection.get("padUsersCount", args,handler);
     }
 
     /**
      * Returns the list of users that are currently editing this pad. A padUser has the values: "colorId", "name" and
      * "timestamp".
-     * @param padId
-     * @return HashMap
      */
-    public HashMap padUsers(String padId) {
+    public void padUsers(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        return this.connection.get("padUsers", args);
+        this.connection.get("padUsers", args, handler);
     }
 
     /**
      * Sets the pad's public status. This is only applicable to group pads.
-     * @param padId the pad's id string
-     * @param publicStatus boolean
      */
-    public void setPublicStatus(String padId, Boolean publicStatus) {
+    public void setPublicStatus(String padId, Boolean publicStatus, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
         args.put("publicStatus", publicStatus);
-        this.connection.post("setPublicStatus", args);
+        this.connection.post("setPublicStatus", args, handler);
     }
 
     /**
      * Gets the pad's public status. The boolean is in "publicStatus". This is only applicable to group pads.<br />
-     * <br />
-     * Example:<br />
-     * <br />
-     * <code>
-     * Boolean is_public = (Boolean)api.getPublicStatus("g.kjsdfj7ask$foo").get("publicStatus");
-     * </code>
-     * @param padId the pad's id string
-     * @return HashMap
      */
-    public HashMap getPublicStatus(String padId) {
+    public void getPublicStatus(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        return this.connection.get("getPublicStatus", args);
+        this.connection.get("getPublicStatus", args, handler);
     }
 
     /**
      * Sets the pad's password. This is only applicable to group pads.
-     * @param padId the pad's id string
-     * @param password string
      */
-    public void setPassword(String padId, String password) {
+    public void setPassword(String padId, String password, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
         args.put("password", password);
-        this.connection.post("setPassword", args);
+        this.connection.post("setPassword", args, handler);
     }
 
     /**
      * Checks whether the pad is password-protected or not. The boolean is in "isPasswordProtected". This is only
      * applicable to group pads.<br />
-     * <br />
-     * Example:<br />
-     * <br />
-     * <code>
-     * Boolean pass = (Boolean)api.isPasswordProtected("g.kjsdfj7ask$foo").get("isPasswordProtected");
-     * </code>
-     * @param padId the pad's id string
-     * @return HashMap
      */
-    public HashMap isPasswordProtected(String padId) {
+    public void isPasswordProtected(String padId, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        return this.connection.get("isPasswordProtected", args);
+        this.connection.get("isPasswordProtected", args, handler);
     }
 
     /**
      * Sends a custom message of type msg to the pad.
-     * @param padId
-     * @param msg
      */
-    public void sendClientsMessage(String padId, String msg) {
+    public void sendClientsMessage(String padId, String msg, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
         args.put("msg", msg);
-        this.connection.post("sendClientsMessage", args);
+        this.connection.post("sendClientsMessage", args, handler);
     }
 
     /**
      * Returns true if the connection is using SSL/TLS, false if not.
-     * @return boolean
      */
     public boolean isSecure() {
         if (this.connection.uri.getPort() == 443) {

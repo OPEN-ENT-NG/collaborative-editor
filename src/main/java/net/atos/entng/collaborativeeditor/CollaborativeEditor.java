@@ -30,9 +30,9 @@ public class CollaborativeEditor extends BaseServer {
         conf.setCollection(COLLABORATIVEEDITOR_COLLECTION);
 
         setDefaultResourceFilter(new ShareAndOwner());
-        addController(new CollaborativeEditorController(vertx.eventBus(), COLLABORATIVEEDITOR_COLLECTION, container));
+        addController(new CollaborativeEditorController(vertx, COLLABORATIVEEDITOR_COLLECTION, container));
         // Subscribe to events published for searching
-        setSearchingEvents(new CollaborativeEditorSearchingEvents(new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION),
+        setSearchingEvents(new CollaborativeEditorSearchingEvents(vertx, new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION),
                 config.getString("etherpad-public-url", config.getString("etherpad-url", "")), config.getString("etherpad-api-key","")));
     }
 }

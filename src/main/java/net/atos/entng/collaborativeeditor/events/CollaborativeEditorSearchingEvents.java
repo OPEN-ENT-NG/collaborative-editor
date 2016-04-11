@@ -6,6 +6,7 @@ import org.entcore.common.search.SearchingEvents;
 import org.entcore.common.service.SearchService;
 import org.etherpad_lite_client.EPLiteClient;
 import org.vertx.java.core.Handler;
+import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
@@ -21,9 +22,9 @@ public class CollaborativeEditorSearchingEvents implements SearchingEvents {
 	private SearchService searchService;
 	private final EPLiteClient client;
 
-	public CollaborativeEditorSearchingEvents(SearchService searchService, String etherpadPublicUrl, String etherpadApiKey) {
+	public CollaborativeEditorSearchingEvents(Vertx vertx, SearchService searchService, String etherpadPublicUrl, String etherpadApiKey) {
 		this.searchService = searchService;
-		this.client = new EPLiteClient(etherpadPublicUrl, etherpadApiKey);
+		this.client = new EPLiteClient(vertx, etherpadPublicUrl, etherpadApiKey);
 	}
 
 	@Override
@@ -45,8 +46,7 @@ public class CollaborativeEditorSearchingEvents implements SearchingEvents {
 				@Override
 				public void handle(Either<String, JsonArray> event) {
 					if (event.isRight()) {
-						final JsonArray res = formatSearchResult(event.right().getValue(), columnsHeader);
-						handler.handle(new Right<String, JsonArray>(res));
+						formatSearchResult(event.right().getValue(), columnsHeader, handler);
 					} else {
 						handler.handle(new Either.Left<String, JsonArray>(event.left().getValue()));
 					}
@@ -61,9 +61,11 @@ public class CollaborativeEditorSearchingEvents implements SearchingEvents {
 	}
 
 
-	private JsonArray formatSearchResult(final JsonArray results, final JsonArray columnsHeader) {
+	private void formatSearchResult(final JsonArray results, final JsonArray columnsHeader, final Handler<Either<String, JsonArray>> handler) {
 		final List<String> aHeader = columnsHeader.toList();
 		final JsonArray traity = new JsonArray();
+
+		final Integer[] callBackCounter = new Integer[]{results.size()};
 
 		for (int i=0;i<results.size();i++) {
 			final JsonObject j = results.get(i);
@@ -71,20 +73,31 @@ public class CollaborativeEditorSearchingEvents implements SearchingEvents {
 			if (j != null) {
 				jr.putString(aHeader.get(0), j.getString("name"));
 				jr.putString(aHeader.get(1), j.getString("description", ""));
-				final Object timestamp = this.client.getLastEdited(j.getString("epName")).get("lastEdited");
-				if (timestamp != null) {
-					jr.putObject(aHeader.get(2), new JsonObject().putValue("$date",
-							new Date(Long.parseLong(timestamp.toString())).getTime()));
-				} else {
-					jr.putObject(aHeader.get(2), j.getObject("modified"));
-				}
-
-				jr.putString(aHeader.get(3), j.getObject("owner").getString("displayName"));
-				jr.putString(aHeader.get(4), j.getObject("owner").getString("userId"));
-				jr.putString(aHeader.get(5), "/collaborativeeditor#/view/" + j.getString("_id"));
-				traity.add(jr);
+				this.client.getLastEdited(j.getString("epName"), new Handler<JsonObject>() {
+					@Override
+					public void handle(JsonObject event) {
+						if ("ok".equals(event.getString("status"))) {
+							callBackCounter[0]--;
+							final Object timestamp = event.getField("lastEdited");
+							if (timestamp != null) {
+								jr.putObject(aHeader.get(2), new JsonObject().putValue("$date",
+										new Date(Long.parseLong(timestamp.toString())).getTime()));
+							} else {
+								jr.putObject(aHeader.get(2), j.getObject("modified"));
+							}
+							jr.putString(aHeader.get(3), j.getObject("owner").getString("displayName"));
+							jr.putString(aHeader.get(4), j.getObject("owner").getString("userId"));
+							jr.putString(aHeader.get(5), "/collaborativeeditor#/view/" + j.getString("_id"));
+							traity.add(jr);
+							if (callBackCounter[0] == 0) {
+								handler.handle(new Right<String, JsonArray>(traity));
+							}
+						} else {
+							//log error
+						}
+					}
+				});
 			}
 		}
-		return traity;
 	}
 }
