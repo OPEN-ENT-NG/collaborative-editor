@@ -16,12 +16,15 @@
             <div class="row">
                 <div class="twelve cell">
                     <div class="seven cell">
-                        <h1 ng-if="!collaborativeeditor || !collaborativeeditor._id">
-                            <i class="collaborativeeditor"></i>
-                            <a ng-click="openMainPage()">
-                                <i18n >collaborativeeditor.title</i18n>
-                            </a>
-                        </h1>
+
+                        <app-title>
+                            <h1 ng-if="!collaborativeeditor || !collaborativeeditor._id">
+                                <i class="collaborativeeditor"></i>
+                                <a ng-click="openMainPage()">
+                                    <i18n >collaborativeeditor.title</i18n>
+                                </a>
+                            </h1>
+                        </app-title>
 
                         <div class="row" ng-if="collaborativeeditor && collaborativeeditor._id">
                             <side-panel ng-if="selectedCollaborativeeditor">
