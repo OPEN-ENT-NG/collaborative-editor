@@ -30,12 +30,15 @@
                             <side-panel ng-if="selectedCollaborativeeditor">
                                 <container template="side-panel"></container>
                             </side-panel>
-                            <h2>
-                                <a ng-click="openMainPage()"><i18n >collaborativeeditor.title</i18n></a>
-                                <span ng-if="selectedCollaborativeeditor.name && selectedCollaborativeeditor.name.trim().length > 0">
-                                    : [[collaborativeeditor.name]]
-                                </span>
-                            </h2>
+
+                            <app-title>
+                                <h1>
+                                    <a ng-click="openMainPage()"><i18n >collaborativeeditor.title</i18n></a>
+                                    <span ng-if="selectedCollaborativeeditor.name && selectedCollaborativeeditor.name.trim().length > 0">
+                                        : [[collaborativeeditor.name]]
+                                    </span>
+                                </h1>
+                            </app-title>
                         </div>
 
 
