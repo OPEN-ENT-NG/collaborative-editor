@@ -9,6 +9,8 @@ import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpClientRequest;
 import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.logging.Logger;
+import org.vertx.java.core.logging.impl.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.net.URI;
@@ -21,6 +23,7 @@ import java.util.Map;
  * Connection object for talking to and parsing responses from the Etherpad Lite Server.
  */
 public class EPLiteConnection {
+    private static final Logger log = LoggerFactory.getLogger(EPLiteConnection.class);
     public static final int CODE_OK = 0;
     public static final int CODE_INVALID_PARAMETERS = 1;
     public static final int CODE_INTERNAL_ERROR = 2;
@@ -185,8 +188,7 @@ public class EPLiteConnection {
                         "An unknown error has occurred while handling the response: " + jsonString));
             }
         } catch (ParseException e) {
-            //TODO log api :  never use system log
-            System.err.println("Unable to parse JSON response (" + jsonString + "): " + e.getMessage());
+            log.error("Unable to parse JSON response (" + jsonString + ")" + e);
             handler.handle(new JsonObject().putString("status", "error").putString("message",
                     "Unable to parse JSON response (" + jsonString + "): " + e.getMessage()));
         }
@@ -200,9 +202,9 @@ public class EPLiteConnection {
             URL url = new URL(new URI(this.uri.getScheme(), null, this.uri.getHost(), this.uri.getPort(), path, query, null).toString());
             return url;
         } catch (Exception e) {
-            //TODO log apui CORE
-            throw new EPLiteException("Unable to connect to Etherpad Lite instance (" + e.getClass() + "): " + e.getMessage());
+            log.error("Unable to connect to Etherpad Lite instance (" + e.getClass() + ")", e);
         }
+        return null;
     }
 
     /**
