@@ -213,13 +213,13 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                     public void handle(Either<String, JsonArray> event) {
                         if (event.isRight()) {
                             final JsonArray objects = event.right().getValue();
-                            final Integer[] counterCallback = new Integer[] {objects.size()};
-                            for (Object object : objects) {
-                                final JsonObject jsonObject = (JsonObject) object;
+                            final int count = objects.size();
+                            for (int i=0;i<count;i++) {
+                                final JsonObject jsonObject = (JsonObject) objects.get(i);
+                                final int current = i+1;
                                 client.getReadOnlyID(jsonObject.getString("epName"), new Handler<JsonObject>() {
                                     @Override
                                     public void handle(JsonObject event) {
-                                        counterCallback[0]--;
                                         if ("ok".equals(event.getString("status"))) {
                                             final String readOnlyId = event.getString("readOnlyID");
                                             String userDisplayName = user.getUsername();
@@ -234,8 +234,9 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                                 URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
 
                                                 jsonObject.putString("url", uri.toASCIIString());
-                                                if (counterCallback[0].equals(0)) {
+                                                if (current == objects.size()) {
                                                     Renders.renderJson(request, objects);
+                                                    return;
                                                 }
                                             } catch (MalformedURLException | URISyntaxException e) {
                                                 log.error(e);
@@ -245,6 +246,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                             jsonObject.removeField("epGroupID");
                                         } else {
                                             Renders.renderError(request, event);
+                                            return;
                                         }
                                     }
                                 });

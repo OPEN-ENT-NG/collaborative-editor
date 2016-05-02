@@ -4,6 +4,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpClientRequest;
 import org.vertx.java.core.http.HttpClientResponse;
@@ -102,18 +103,16 @@ public class EPLiteConnection {
 
     /**
      * Calls the HTTP JSON API.
+     * FIXME Post call doesn't work due to unauthorized error (I have simulate query with another client and the result is the same)
+     * FIXME Perhaps etherpad-lite API don't support POST http verb
      */
     private void callPost(final URL url, final Handler<JsonObject> handler) {
         trustServerAndCertificate();
 
-        HttpClientRequest req = httpClient.post(url.toString(), new Handler<HttpClientResponse>() {
+        HttpClientRequest req = httpClient.get(url.toString(), new Handler<HttpClientResponse>() {
             @Override
             public void handle(final HttpClientResponse response) {
-                if (response.statusCode() == 200) {
-                    handleResponse(response.statusMessage(), handler);
-                } else {
-                    handler.handle(new JsonObject().putString("status", "error"));
-                }
+                parseData(response, handler);
             }
         });
         req.end();
@@ -128,14 +127,30 @@ public class EPLiteConnection {
         HttpClientRequest req = httpClient.get(url.toString(), new Handler<HttpClientResponse>() {
             @Override
             public void handle(final HttpClientResponse response) {
-                if (response.statusCode() == 200) {
-                    handleResponse(response.statusMessage(), handler);
-                } else {
-                    handler.handle(new JsonObject().putString("status", "error"));
-                }
+                parseData(response, handler);
             }
         });
         req.end();
+    }
+
+    private void parseData(HttpClientResponse response, final Handler<JsonObject> handler) {
+        if (response.statusCode() == 200) {
+            final Buffer buff = new Buffer();
+            response.dataHandler(new Handler<Buffer>() {
+                @Override
+                public void handle(Buffer event) {
+                    buff.appendBuffer(event);
+                }
+            });
+            response.endHandler(new Handler<Void>() {
+                @Override
+                public void handle(Void end) {
+                    handleResponse(buff.toString(), handler);
+                }
+            });
+        } else {
+            handler.handle(new JsonObject().putString("status", "error"));
+        }
     }
 
     /**
@@ -151,13 +166,15 @@ public class EPLiteConnection {
                 switch (code) {
                     // Valid code, parse the response
                     case CODE_OK:
-                        handler.handle(new JsonObject((HashMap) response.get("data")).putString("status", "ok"));
+                        final HashMap datas = (HashMap) response.get("data");
+                        handler.handle(new JsonObject((datas != null) ? datas : new HashMap<String, Object>()).putString("status", "ok"));
+                        break;
                         // Invalid code, throw an exception with the message
                     case CODE_INVALID_PARAMETERS:
                     case CODE_INVALID_API_KEY:
                     case CODE_INVALID_METHOD:
                         handler.handle(new JsonObject().putString("status", "error").putString("message", (String)response.get("message")));
-
+                        break;
                     default:
                         handler.handle(new JsonObject().putString("status", "error").putString("message",
                                 "An unknown error has occurred while handling the response: " + jsonString));
