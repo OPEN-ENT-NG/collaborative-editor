@@ -50,6 +50,9 @@ Déclarer l'application dans la liste :
     "etherpad-url": "http://host.domaine.fr",
     "etherpad-public-url": "http://host.domaine.fr",
     "etherpad-api-key" : "clef",
+    "unusedPadCron" : "0 0 23 * * ?",
+    "numberDaysWithoutActivity" : 90,
+    "recurringNotificationDays" : 15,
     "entcore.port" : 8009  
   }
 }

@@ -34,8 +34,8 @@ public class NotUsingPAD implements Handler<Long> {
     public NotUsingPAD(final TimelineHelper timelineHelper,  final EPLiteClient client, final JsonObject config) {
         this.timelineHelper = timelineHelper;
         this.client = client;
-        this.numberDaysWithoutActivity =  config.getInteger("numberDaysWithoutActivity", 60);
-        this.recurringNotificationDays = config.getInteger("recurringNotificationDays", 10);
+        this.numberDaysWithoutActivity =  config.getInteger("numberDaysWithoutActivity", 90);
+        this.recurringNotificationDays = config.getInteger("recurringNotificationDays", 15);
         this.host = config.getString("host", "http://localhost:8090");
     }
 
