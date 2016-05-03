@@ -20,11 +20,11 @@ public class CollaborativeEditorSearchingEvents implements SearchingEvents {
 
 	private static final Logger log = LoggerFactory.getLogger(CollaborativeEditorSearchingEvents.class);
 	private SearchService searchService;
-	private final EPLiteClient client;
+	private final EPLiteClient epClient;
 
-	public CollaborativeEditorSearchingEvents(Vertx vertx, SearchService searchService, String etherpadPublicUrl, String etherpadApiKey) {
+	public CollaborativeEditorSearchingEvents(Vertx vertx, SearchService searchService, final EPLiteClient epClient) {
 		this.searchService = searchService;
-		this.client = new EPLiteClient(vertx, etherpadPublicUrl, etherpadApiKey);
+		this.epClient = epClient;
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class CollaborativeEditorSearchingEvents implements SearchingEvents {
 			if (j != null) {
 				jr.putString(aHeader.get(0), j.getString("name"));
 				jr.putString(aHeader.get(1), j.getString("description", ""));
-				this.client.getLastEdited(j.getString("epName"), new Handler<JsonObject>() {
+				this.epClient.getLastEdited(j.getString("epName"), new Handler<JsonObject>() {
 					@Override
 					public void handle(JsonObject event) {
 						if ("ok".equals(event.getString("status"))) {

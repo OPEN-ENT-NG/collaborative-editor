@@ -1,5 +1,8 @@
 {
     "collaborativeeditor": "Pad",
     "collaborativeeditor.share": "Partage d'un Pad",
-    "timeline.collaborativeeditor.has.shared": "vous a partagé le Pad"
+    "timeline.collaborativeeditor.has.shared": "vous a partagé le Pad",
+    "timeline.notify.unused.title": "Le PAD intitulé '",
+    "timeline.notify.unused.title.after": "' est candidat à la suppression.",
+    "timeline.notify.unused.body": "Pour information, votre PAD n'a plus été modifié depuis le "
 }

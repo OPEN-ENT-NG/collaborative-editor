@@ -152,7 +152,7 @@ public class EPLiteConnection {
                 }
             });
         } else {
-            handler.handle(new JsonObject().putString("status", "error"));
+            handler.handle(new JsonObject().putString("status", "error").putString("message", response.statusMessage()));
         }
     }
 

@@ -1,6 +1,7 @@
 package net.atos.entng.collaborativeeditor.helpers;
 
 import fr.wseduc.webutils.Either;
+import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.CookieHelper;
 import fr.wseduc.webutils.request.RequestUtils;
@@ -112,6 +113,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                                 public void handle(JsonObject object) {
                                                     object.putString("epName", padName);
                                                     object.putString("epGroupID", groupID);
+                                                    object.putString("locale", I18n.acceptLanguage(request));
                                                     etherpadCrudService.create(object, user, notEmptyResponseHandler(request));
                                                 }
                                             });

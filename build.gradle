@@ -4,6 +4,7 @@ apply plugin: 'scala'
 dependencies {
 	compile "org.entcore:common:$entCoreVersion"
     compile "com.googlecode.json-simple:json-simple:1.1.1"
+    compile "fr.wseduc:vertx-cron-timer:$vertxCronTimer"
     testCompile "org.entcore:tests:$entCoreVersion"
 }
 
