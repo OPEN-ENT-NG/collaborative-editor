@@ -250,6 +250,10 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                         } else {
                                             //only log the error if the mongo entry don't link with a real pad
                                             log.error(event.getString("message"));
+                                            if (current == objects.size()) {
+                                                Renders.renderJson(request, objects);
+                                                return;
+                                            }
                                         }
                                     }
                                 });
