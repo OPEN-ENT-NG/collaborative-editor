@@ -172,11 +172,18 @@ public class EPLiteConnection {
                         final HashMap datas = (HashMap) response.get("data");
                         handler.handle(new JsonObject((datas != null) ? datas : new HashMap<String, Object>()).putString("status", "ok"));
                         break;
-                        // Invalid code, throw an exception with the message
+                        // Invalid code, indicate the error message
                     case CODE_INVALID_PARAMETERS:
+                        handler.handle(new JsonObject().putString("status", "error").putString("message", "CODE_INVALID_PARAMETERS : " + (String)response.get("message")));
+                        break;
+                    case CODE_INTERNAL_ERROR:
+                        handler.handle(new JsonObject().putString("status", "error").putString("message", "CODE_INTERNAL_ERROR : " + (String)response.get("message")));
+                        break;
                     case CODE_INVALID_API_KEY:
+                        handler.handle(new JsonObject().putString("status", "error").putString("message", "CODE_INVALID_API_KEY : " + (String)response.get("message")));
+                        break;
                     case CODE_INVALID_METHOD:
-                        handler.handle(new JsonObject().putString("status", "error").putString("message", (String)response.get("message")));
+                        handler.handle(new JsonObject().putString("status", "error").putString("message", "CODE_INVALID_METHOD : " + (String)response.get("message")));
                         break;
                     default:
                         handler.handle(new JsonObject().putString("status", "error").putString("message",

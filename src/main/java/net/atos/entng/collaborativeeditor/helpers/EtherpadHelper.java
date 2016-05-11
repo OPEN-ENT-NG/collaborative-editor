@@ -216,6 +216,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                         if (event.isRight()) {
                             final JsonArray objects = event.right().getValue();
                             final int count = objects.size();
+
                             for (int i=0;i<count;i++) {
                                 final JsonObject jsonObject = (JsonObject) objects.get(i);
                                 final int current = i+1;
@@ -247,8 +248,8 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                             jsonObject.removeField("epName");
                                             jsonObject.removeField("epGroupID");
                                         } else {
-                                            Renders.renderError(request, event);
-                                            return;
+                                            //only log the error if the mongo entry don't link with a real pad
+                                            log.error(event.getString("message"));
                                         }
                                     }
                                 });
@@ -361,27 +362,39 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                         public void handle(Either<String, JsonObject> event) {
                             if (event.isRight()) {
                                 if (event.right().getValue() != null && event.right().getValue().size() > 0) {
-                                    JsonObject object = event.right().getValue();
-                                    client.deletePad(object.getString("epName"), new Handler<JsonObject>() {
+                                    final JsonObject object = event.right().getValue();
+                                    etherpadCrudService.delete(id, user, new Handler<Either<String, JsonObject>>() {
                                         @Override
-                                        public void handle(JsonObject event) {
-                                            if (!"ok".equals(event.getString("status"))) {
-                                                log.error("Fail to delete a pad on backend " + event.getString("message"));
+                                        public void handle(Either<String, JsonObject> event) {
+                                            if (event.isRight()) {
+                                                client.deletePad(object.getString("epName"), new Handler<JsonObject>() {
+                                                    @Override
+                                                    public void handle(JsonObject event) {
+                                                        if (!"ok".equals(event.getString("status"))) {
+                                                            log.error("Fail to delete a pad on backend " + event.getString("message"));
+                                                        }
+                                                    }
+                                                });
+                                                client.deleteGroup(object.getString("epGroupID"), new Handler<JsonObject>() {
+                                                    @Override
+                                                    public void handle(JsonObject event) {
+                                                        if (!"ok".equals(event.getString("status"))) {
+                                                            log.error("Fail to delete a group on backend " + event.getString("message"));
+                                                        }
+                                                    }
+                                                });
+                                                Renders.renderJson(request, event.right().getValue(), 200);
+                                            } else {
+                                                log.error("Fail to delete a pad on mongo backend from id : " + id + ", error : " + event.left().getValue());
+                                                Renders.renderError(request, new JsonObject().putString("error", event.left().getValue()));
                                             }
                                         }
                                     });
-                                    client.deleteGroup(object.getString("epGroupID"), new Handler<JsonObject>() {
-                                        @Override
-                                        public void handle(JsonObject event) {
-                                            if (!"ok".equals(event.getString("status"))) {
-                                                log.error("Fail to delete a group on backend " + event.getString("message"));
-                                            }
-                                        }
-                                    });
+                                } else {
+                                    Renders.renderError(request, new JsonObject().putString("error", "Empty result from id : " + id));
                                 }
-                                etherpadCrudService.delete(id, user, notEmptyResponseHandler(request));
                             } else {
-                                request.response().setStatusCode(404).end();
+                                Renders.renderError(request, new JsonObject().putString("error", event.left().getValue()));
                             }
                         }
                     });
