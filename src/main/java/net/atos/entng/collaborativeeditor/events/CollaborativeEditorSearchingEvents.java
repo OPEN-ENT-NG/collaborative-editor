@@ -84,25 +84,32 @@ public class CollaborativeEditorSearchingEvents implements SearchingEvents {
 		final List<String> aHeader = columnsHeader.toList();
 		final JsonArray traity = new JsonArray();
 
-		final Integer[] callBackCounter = new Integer[]{results.size()};
+		if (results.size() == 0) {
+			handler.handle(new Right<String, JsonArray>(traity));
+		} else {
+			final Integer[] callBackCounter = new Integer[]{results.size()};
 
-		for (int i=0;i<results.size();i++) {
-			final JsonObject j = results.get(i);
-			final JsonObject jr = new JsonObject();
-			if (j != null) {
-				jr.putString(aHeader.get(0), j.getString("name"));
-				jr.putString(aHeader.get(1), j.getString("description", ""));
-				this.epClient.getLastEdited(j.getString("epName"), new Handler<JsonObject>() {
-					@Override
-					public void handle(JsonObject event) {
-						if ("ok".equals(event.getString("status"))) {
+			for (int i = 0; i < results.size(); i++) {
+				final JsonObject j = results.get(i);
+				final JsonObject jr = new JsonObject();
+				if (j != null) {
+					jr.putString(aHeader.get(0), j.getString("name"));
+					jr.putString(aHeader.get(1), j.getString("description", ""));
+					this.epClient.getLastEdited(j.getString("epName"), new Handler<JsonObject>() {
+						@Override
+						public void handle(JsonObject event) {
 							callBackCounter[0]--;
-							final Object timestamp = event.getField("lastEdited");
-							if (timestamp != null) {
-								jr.putObject(aHeader.get(2), new JsonObject().putValue("$date",
-										new Date(Long.parseLong(timestamp.toString())).getTime()));
+							if ("ok".equals(event.getString("status"))) {
+								final Object timestamp = event.getField("lastEdited");
+								if (timestamp != null) {
+									jr.putObject(aHeader.get(2), new JsonObject().putValue("$date",
+											new Date(Long.parseLong(timestamp.toString())).getTime()));
+								} else {
+									jr.putObject(aHeader.get(2), j.getObject("modified"));
+								}
 							} else {
 								jr.putObject(aHeader.get(2), j.getObject("modified"));
+								log.error("Fail to request getLastEdited PAD : " + event.getString("message"));
 							}
 							jr.putString(aHeader.get(3), j.getObject("owner").getString("displayName"));
 							jr.putString(aHeader.get(4), j.getObject("owner").getString("userId"));
@@ -111,11 +118,9 @@ public class CollaborativeEditorSearchingEvents implements SearchingEvents {
 							if (callBackCounter[0] == 0) {
 								handler.handle(new Right<String, JsonArray>(traity));
 							}
-						} else {
-							//log error
 						}
-					}
-				});
+					});
+				}
 			}
 		}
 	}
