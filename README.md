@@ -82,6 +82,7 @@ Il vous permet de partager l'élaboration simultanée d'un texte, et d'en discut
 Des permissions sur les différentes actions possibles sur les pads, dont la contribution et la gestion, sont configurées dans le Pad (via des partages Ent-core). 
 Le droit de lecture, correspondant à qui peut consulter le Pad est également configuré de cette manière. 
 
+Le Pad met en œuvre un comportement de recherche sur le nom et la description des Pads.
 
 ## Intégration avec le service etherpad distant
 
@@ -103,7 +104,11 @@ Le contrôleur`CollaborativeEditorController`, qui correspond au point d'entrée
  * De l'exposition de service de manipulation des Pads (création, suppression, liste et gestion des sessions)
  
 Le contrôleur et le helper étendent les classes du framework Ent-core exploitant les CrudServices de base pour les métadonnées.
- 
+
+Le module serveur met en œuvre un évènement issu du framework Ent-core :
+
+* `CollaborativeEditorSearchingEvents` : Logique de recherche
+
 Un jsonschema permet de vérifier les données reçues par le serveur, il se trouve dans le dossier "src/main/resources/jsonschema".
 
 ## Modèle front-end
