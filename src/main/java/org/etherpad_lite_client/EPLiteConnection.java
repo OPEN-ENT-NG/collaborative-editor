@@ -82,6 +82,9 @@ public class EPLiteConnection {
         this.httpClient = vertx.createHttpClient()
                 .setHost(uri.getHost())
                 .setPort(port)
+                .setVerifyHost(false)
+                // fixme Warning jvm knows no AC, trusted parameter used, but MITM attacks are feasible
+                .setTrustAll(true)
                 .setMaxPoolSize(16)
                 .setSSL("https".equals(uri.getScheme()))
                 .setKeepAlive(false);
@@ -129,8 +132,6 @@ public class EPLiteConnection {
      * FIXME Perhaps etherpad-lite API don't support POST http verb
      */
     private void callPost(final URL url, final Handler<JsonObject> handler) {
-        trustServerAndCertificate();
-
         HttpClientRequest req = httpClient.get(url.toString(), new Handler<HttpClientResponse>() {
             @Override
             public void handle(final HttpClientResponse response) {
@@ -144,8 +145,6 @@ public class EPLiteConnection {
      * Calls the HTTP JSON API.
      */
     private void callGet(final URL url, final Handler<JsonObject> handler) {
-        trustServerAndCertificate();
-
         HttpClientRequest req = httpClient.get(url.toString(), new Handler<HttpClientResponse>() {
             @Override
             public void handle(final HttpClientResponse response) {
@@ -262,43 +261,5 @@ public class EPLiteConnection {
             }
         }
         return strArgs;
-    }
-
-    /**
-     * Creates a trust manager to trust all certificates if you open a ssl connection
-     */
-    private void trustServerAndCertificate() {
-        // Create a trust manager that does not validate certificate chains
-        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-            @Override
-            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-            @Override
-            public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-            }
-
-            @Override
-            public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-            }
-        } };
-
-        // Install the all-trusting trust manager
-        try {
-            SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-        } catch (Exception e) {
-        }
-
-        HostnameVerifier hv = new HostnameVerifier() {
-            // @Override
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        };
-        HttpsURLConnection.setDefaultHostnameVerifier(hv);
     }
 }
