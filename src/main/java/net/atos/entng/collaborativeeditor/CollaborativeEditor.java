@@ -58,7 +58,7 @@ public class CollaborativeEditor extends BaseServer {
         addController(new CollaborativeEditorController(vertx, COLLABORATIVEEDITOR_COLLECTION, container));
         // Subscribe to events published for searching
         final EPLiteClient epClient = new EPLiteClient(vertx, config.getString("etherpad-public-url",
-                config.getString("etherpad-url", "")), config.getString("etherpad-api-key",""));
+                config.getString("etherpad-url", "")), config.getString("etherpad-api-key",""), config.getBoolean("trust-all-certificate", true));
         setSearchingEvents(new CollaborativeEditorSearchingEvents(vertx,
                 new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION), epClient));
         final String unusedPadCron = container.config().getString("unusedPadCron", "0 0 23 * * ?");

@@ -35,6 +35,8 @@ public class EPLiteClient {
      */
     public static final String DEFAULT_API_VERSION = "1.2.1";
 
+    public static final Boolean DEFAULT_TRUST_ALL_CERTIFICATE = false;
+
     /**
      * The connection object
      */
@@ -45,15 +47,23 @@ public class EPLiteClient {
      * DEFAULT_API_VERSION) will be used.
      */
     public EPLiteClient(Vertx vertx, String url, String apiKey) {
-        this.connection = new EPLiteConnection(vertx, url, apiKey, DEFAULT_API_VERSION);
+        this.connection = new EPLiteConnection(vertx, url, apiKey, DEFAULT_API_VERSION, DEFAULT_TRUST_ALL_CERTIFICATE);
+    }
+
+    /**
+     * Initializes a new org.etherpad_lite_client.EPLiteClient object. The specified Etherpad Lite trust SSL will be
+     * used.
+     */
+    public EPLiteClient(Vertx vertx, String url, String apiKey, Boolean trustAll) {
+        this.connection = new EPLiteConnection(vertx, url, apiKey, DEFAULT_API_VERSION, trustAll);
     }
 
     /**
      * Initializes a new org.etherpad_lite_client.EPLiteClient object. The specified Etherpad Lite API version will be
      * used.
      */
-    public EPLiteClient(Vertx vertx, String url, String apiKey, String apiVersion) {
-        this.connection = new EPLiteConnection(vertx, url, apiKey, apiVersion);
+    public EPLiteClient(Vertx vertx, String url, String apiKey, String apiVersion, Boolean trustAll) {
+        this.connection = new EPLiteConnection(vertx, url, apiKey, apiVersion, trustAll);
     }
 
     // Groups

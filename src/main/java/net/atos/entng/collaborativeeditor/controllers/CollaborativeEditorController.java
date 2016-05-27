@@ -68,7 +68,9 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
     public CollaborativeEditorController(Vertx vertx, String collection, Container container) {
         super(collection);
         JsonObject config = container.config();
-        this.etherpadHelper = new EtherpadHelper(vertx, collection, config.getString("etherpad-url", null), config.getString("etherpad-api-key", null), config.getString("etherpad-public-url", null),config.getString("etherpad-domain", null));
+        this.etherpadHelper = new EtherpadHelper(vertx, collection, config.getString("etherpad-url", null),
+                config.getString("etherpad-api-key", null), config.getString("etherpad-public-url", null),
+                config.getBoolean("trust-all-certificate", true), config.getString("etherpad-domain", null));
     }
 
     @Get("")

@@ -73,7 +73,7 @@ public class EPLiteConnection {
      * @param apiKey the API Key
      * @param apiVersion the API version
      */
-    public EPLiteConnection(Vertx vertx, String url, String apiKey, String apiVersion) {
+    public EPLiteConnection(Vertx vertx, String url, String apiKey, String apiVersion, Boolean trustAll) {
         this.uri = URI.create(url);
         this.apiKey = apiKey;
         this.apiVersion = apiVersion;
@@ -84,7 +84,7 @@ public class EPLiteConnection {
                 .setPort(port)
                 .setVerifyHost(false)
                 // fixme Warning jvm knows no AC, trusted parameter used, but MITM attacks are feasible
-                .setTrustAll(true)
+                .setTrustAll(trustAll)
                 .setMaxPoolSize(16)
                 .setSSL("https".equals(uri.getScheme()))
                 .setKeepAlive(false);

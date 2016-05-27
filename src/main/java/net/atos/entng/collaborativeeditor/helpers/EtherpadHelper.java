@@ -84,7 +84,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
      * @param etherpadApiKey Etherpad API key
      * @param etherpadPublicUrl Etherpad service public URL
      */
-    public EtherpadHelper(Vertx vertx, String collection, String etherpadUrl, String etherpadApiKey, String etherpadPublicUrl, String domain) {
+    public EtherpadHelper(Vertx vertx, String collection, String etherpadUrl, String etherpadApiKey, String etherpadPublicUrl, Boolean trustAll, String domain) {
         super(collection);
         this.etherpadCrudService = new MongoDbCrudService(collection);
         if (null == etherpadUrl || etherpadUrl.trim().isEmpty()) {
@@ -106,7 +106,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
 
         this.domain = domain;
 
-        this.client = new EPLiteClient(vertx, etherpadUrl, etherpadApiKey);
+        this.client = new EPLiteClient(vertx, etherpadUrl, etherpadApiKey, trustAll);
 
     }
 
