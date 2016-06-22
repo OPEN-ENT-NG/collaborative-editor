@@ -1,0 +1,1 @@
+db.collaborativeeditor.createIndex({ "name": "text", "description": "text"});

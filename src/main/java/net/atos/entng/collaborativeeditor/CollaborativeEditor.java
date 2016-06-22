@@ -62,7 +62,7 @@ public class CollaborativeEditor extends BaseServer {
 
         if (config.getBoolean("searching-event", true)) {
             setSearchingEvents(new CollaborativeEditorSearchingEvents(vertx,
-                    new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION), epClient));
+                    new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION)));
         }
 
         final String unusedPadCron = container.config().getString("unusedPadCron", "0 0 23 * * ?");
