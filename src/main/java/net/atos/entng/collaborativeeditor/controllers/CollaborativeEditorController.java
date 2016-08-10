@@ -167,13 +167,13 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
                         return;
                     }
                     JsonObject params = new JsonObject();
-                    params.putString("uri", container.config().getString("host", "http://localhost:8090") +
+                    params.putString("uri", getScheme(request) + "://" + getHost(request) +
                         "/userbook/annuaire#" + user.getUserId() + "#" + user.getType());
                     params.putString("username", user.getUsername());
-                    params.putString("collaborativeeditorUri", container.config().getString("host", "http://localhost:8090") +
+                    params.putString("collaborativeeditorUri", getScheme(request) + "://" + getHost(request) +
                         "/collaborativeeditor#/view/" + id);
                     params.putString("resourceUri", params.getString("collaborativeeditorUri"));
-                    
+
                     shareJsonSubmit(request, "collaborativeeditor.share", false, params, "name");
                 }
             }
