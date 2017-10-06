@@ -47,6 +47,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.entcore.common.http.response.DefaultResponseHandler.notEmptyResponseHandler;
 
@@ -216,7 +217,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         UserUtils.getUserInfos(eb, request, new Handler<UserInfos>() {
             @Override
             public void handle(final UserInfos user) {
-                String filter = request.params().get("filter");
+                final String filter = request.params().get("filter");
                 VisibilityFilter v = VisibilityFilter.ALL;
                 if (filter != null) {
                     try {
@@ -229,47 +230,48 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                     }
                 }
 
+                final String userDisplayName = user.getUsername();
+
                 etherpadCrudService.list(v, user, new Handler<Either<String, JsonArray>>() {
                     @Override
                     public void handle(Either<String, JsonArray> event) {
                         if (event.isRight()) {
                             final JsonArray objects = event.right().getValue();
-                            final int count = objects.size();
+                            final AtomicInteger callCount = new AtomicInteger(objects.size());
 
-                            for (int i=0;i<count;i++) {
+                            for (int i=0;i<objects.size();i++) {
                                 final JsonObject jsonObject = (JsonObject) objects.get(i);
-                                final int current = i+1;
+
                                 client.getReadOnlyID(jsonObject.getString("epName"), new Handler<JsonObject>() {
                                     @Override
                                     public void handle(JsonObject event) {
                                         if ("ok".equals(event.getString("status"))) {
                                             final String readOnlyId = event.getString("readOnlyID");
-                                            String userDisplayName = user.getUsername();
+
                                             try {
-                                                String urlReadOnlyStr = etherpadPublicUrl + "/p/" + readOnlyId + "?userName=" + userDisplayName;
-                                                URL urlReadOnly = new URL(urlReadOnlyStr);
-                                                URI uriReadOnly = new URI(urlReadOnly.getProtocol(), urlReadOnly.getUserInfo(), urlReadOnly.getHost(), urlReadOnly.getPort(), urlReadOnly.getPath(), urlReadOnly.getQuery(), urlReadOnly.getRef());
+                                                final String urlReadOnlyStr = etherpadPublicUrl + "/p/" + readOnlyId + "?userName=" + userDisplayName;
+                                                final URL urlReadOnly = new URL(urlReadOnlyStr);
+                                                final URI uriReadOnly = new URI(urlReadOnly.getProtocol(), urlReadOnly.getUserInfo(), urlReadOnly.getHost(), urlReadOnly.getPort(), urlReadOnly.getPath(), urlReadOnly.getQuery(), urlReadOnly.getRef());
                                                 jsonObject.putString("readOnlyUrl", uriReadOnly.toASCIIString());
 
-                                                String urlStr = etherpadPublicUrl + "/p/" + jsonObject.getString("epName") + "?userName=" + userDisplayName;
-                                                URL url = new URL(urlStr);
-                                                URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
-
+                                                final String urlStr = etherpadPublicUrl + "/p/" + jsonObject.getString("epName") + "?userName=" + userDisplayName;
+                                                final URL url = new URL(urlStr);
+                                                final URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
                                                 jsonObject.putString("url", uri.toASCIIString());
-                                                if (current == objects.size()) {
-                                                    Renders.renderJson(request, objects);
-                                                    return;
-                                                }
                                             } catch (MalformedURLException | URISyntaxException e) {
-                                                log.error(e);
-                                                request.response().setStatusCode(500).end();
+                                                log.error("Can't generate etherpad-lite url", e);
                                             }
                                             jsonObject.removeField("epName");
                                             jsonObject.removeField("epGroupID");
+
+                                            if (callCount.decrementAndGet() == 0) {
+                                                Renders.renderJson(request, objects);
+                                                return;
+                                            }
                                         } else {
                                             //only log the error if the mongo entry don't link with a real pad
                                             log.error(event.getString("message"));
-                                            if (current == objects.size()) {
+                                            if (callCount.decrementAndGet() == 0) {
                                                 Renders.renderJson(request, objects);
                                                 return;
                                             }
