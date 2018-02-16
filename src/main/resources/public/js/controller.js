@@ -32,12 +32,12 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
     $scope.exportInProgress = false;
     $scope.action = 'collaborativeeditor-list';
     $scope.notFound = false;
-    
+
     // By default open the collaborative editor list
     template.open('collaborativeeditor', 'collaborativeeditor-list');
     template.open('side-panel', 'collaborativeeditor-side-panel');
-    
-    
+
+
     /**
      * Allows to create a new collaborative editor and open the "collaborativeeditor-edit.html" template into
      * the "main" div.
@@ -53,18 +53,18 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
 	$scope.redirect = function(path){
 		$location.path(path);
 	};
-	
+
     /**
      * Allows to save the current edited collaborative editor in the scope. After saving the
      * current collaborative editor this method closes the edit view too.
      */
     $scope.saveCollaborativeeditor = function() {
         $scope.master = angular.copy($scope.collaborativeeditor);
-        
+
         // Urls should not be updated
         delete $scope.master.url;
         delete $scope.master.readOnlyUrl;
-               
+
         $scope.master.save(function() {
             $scope.collaborativeeditors.sync(function() {
                  $scope.updateSearchBar();
@@ -76,7 +76,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
 
     /**
      * Update the search bar according server collaborative editors
-     */    
+     */
     $scope.updateSearchBar = function() {
         model.collaborativeEditors.sync(function() {
             $scope.searchbar.collaborativeeditors = $scope.collaborativeeditors.all.map(function(collaborativeeditor) {
@@ -101,22 +101,22 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
     $scope.openPageFromSearchbar = function(collaborativeeditorId) {
         window.location.hash = '/view/' + collaborativeeditorId;
     };
-    
+
     /**
      * Retrieve the collaborative editor thumbnail if there is one
      */
     $scope.getCollaborativeeditorThumbnail = function(collaborativeeditor){
         if(!collaborativeeditor.thumbnail || collaborativeeditor.thumbnail === ''){
-            return '/img/illustrations/collaborativeeditor-default.png';
+            return '/img/illustrations/image-default.svg';
         }
         return collaborativeeditor.thumbnail + '?thumbnail=120x120';
     };
-    
+
     /**
-     * Open a collaborative editor 
-     */ 
+     * Open a collaborative editor
+     */
     $scope.openCollaborativeeditor = function(collaborativeeditor) {
-        if ($scope.selectedCollaborativeeditor) {            
+        if ($scope.selectedCollaborativeeditor) {
             $scope.selectedCollaborativeeditor.deleteSession();
         }
         delete $scope.collaborativeeditor;
@@ -124,11 +124,11 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         delete $scope.padUrl;
         $scope.notFound = false;
 
-       
+
         $scope.collaborativeeditors.forEach(function(c) {
             c.showButtons = false;
         });
-            
+
         $scope.collaborativeeditor = $scope.selectedCollaborativeeditor = collaborativeeditor;
 
         if ($scope.canContributeCollaborativeeditor(collaborativeeditor)) {
@@ -136,7 +136,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         } else {
             $scope.padUrl = $sce.trustAsResourceUrl(collaborativeeditor.readOnlyUrl);
         }
-        
+
         $scope.collaborativeeditor.session();
 
         template.close('main');
@@ -146,10 +146,10 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         $scope.action = 'collaborativeeditor-open';
 
         template.open('etherpad', 'collaborativeeditor-edit');
-        
+
     };
-    
-    
+
+
     window.onbeforeunload = function() {
         if ($scope.selectedCollaborativeeditor) {
             $scope.selectedCollaborativeeditor.deleteSession();
@@ -158,7 +158,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
             });
         }
     }
-    
+
     window.onunload = function () {
         if ($scope.selectedCollaborativeeditor) {
             $scope.selectedCollaborativeeditor.deleteSession();
@@ -170,19 +170,19 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
 
     /**
      * Display date in French format
-     */ 
+     */
     $scope.formatDate = function(dateObject){
         return moment(dateObject.$date).lang('fr').calendar();
     };
-   
-    
+
+
     /**
      * Checks if a user is a manager
      */
     $scope.canManageCollaborativeeditor = function(collaborativeeditor){
         return (collaborativeeditor.myRights.manage !== undefined);
     };
-    
+
     /**
      * Checks if a user is a contributor
      */
@@ -228,7 +228,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
      * @param event triggered event
      */
     $scope.hideAlmostAllButtons = function(collaborativeeditor, event) {
-        event.stopPropagation();       
+        event.stopPropagation();
 
         if (collaborativeeditor.showButtons) {
             $scope.collaborativeeditor = collaborativeeditor;
@@ -249,7 +249,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
      * @param event triggered event
      */
     $scope.hideAllButtons = function(collaborativeeditor, event) {
-        event.stopPropagation();       
+        event.stopPropagation();
 
         if (collaborativeeditor.showButtons) {
             $scope.collaborativeeditor = collaborativeeditor;
@@ -331,9 +331,9 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
     route({
 
         /**
-         * Retrieve a collaborative editor from its database id and open it 
+         * Retrieve a collaborative editor from its database id and open it
          */
-        viewCollaborativeeditor: function(params){     
+        viewCollaborativeeditor: function(params){
             model.collaborativeEditors.sync(function() {
                 var c = _.find(model.collaborativeEditors.all, function(collaborativeeditor){
                     return collaborativeeditor._id === params.collaborativeeditorId;
@@ -356,6 +356,6 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
             $scope.openMainPage();
         }
     });
-    
+
 }
 console.log("End loading controller pad");
