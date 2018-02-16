@@ -31,13 +31,13 @@ import org.entcore.common.service.impl.MongoDbCrudService;
 import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
 import org.etherpad_lite_client.EPLiteClient;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.http.HttpServerRequest;
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-import org.vertx.java.core.logging.impl.LoggerFactory;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -121,19 +121,19 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                     client.createGroup(new Handler<JsonObject>() {
                         @Override
                         public void handle(JsonObject event) {
-                            if ("ok".equals(event.getField("status"))) {
+                            if ("ok".equals(event.getString("status"))) {
                                 final String groupID = event.getString("groupID");
                                 client.createGroupPad(groupID, randomName, new Handler<JsonObject>() {
                                     @Override
                                     public void handle(JsonObject event) {
-                                        if ("ok".equals(event.getField("status"))) {
+                                        if ("ok".equals(event.getString("status"))) {
                                             final String padName = event.getString("padID");
                                             RequestUtils.bodyToJson(request, new Handler<JsonObject>() {
                                                 @Override
                                                 public void handle(JsonObject object) {
-                                                    object.putString("epName", padName);
-                                                    object.putString("epGroupID", groupID);
-                                                    object.putString("locale", I18n.acceptLanguage(request));
+                                                    object.put("epName", padName);
+                                                    object.put("epGroupID", groupID);
+                                                    object.put("locale", I18n.acceptLanguage(request));
                                                     etherpadCrudService.create(object, user, notEmptyResponseHandler(request));
                                                 }
                                             });
@@ -171,7 +171,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                 client.createAuthorIfNotExistsFor(user.getLogin(), new Handler<JsonObject>() {
                                     @Override
                                     public void handle(JsonObject event) {
-                                        if ("ok".equals(event.getField("status"))) {
+                                        if ("ok".equals(event.getString("status"))) {
                                             final String authorID = event.getString("authorID");
                                             // Create session for the user on the pad group
                                             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Paris"));
@@ -180,13 +180,13 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                             client.createSession(object.getString("epGroupID"), authorID, validUntil, new Handler<JsonObject>() {
                                                 @Override
                                                 public void handle(JsonObject event) {
-                                                    if ("ok".equals(event.getField("status"))) {
+                                                    if ("ok".equals(event.getString("status"))) {
                                                         final String session = event.getString("sessionID");
                                                         request.response().putHeader("Set-Cookie", "sessionID=" + session + ";max-age=" + 2 * 360 * 1000 + ";path=/;domain=" + domain);
 
-                                                        object.putString("url", etherpadPublicUrl + "/p/" + object.getString("epName"));
-                                                        object.removeField("epGroupID");
-                                                        object.removeField("epName");
+                                                        object.put("url", etherpadPublicUrl + "/p/" + object.getString("epName"));
+                                                        object.remove("epGroupID");
+                                                        object.remove("epName");
 
                                                         Renders.renderJson(request, object, 200);
                                                     } else {
@@ -203,7 +203,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                 request.response().setStatusCode(404).end();
                             }
                         } else {
-                            JsonObject error = new JsonObject().putString("error", event.left().getValue());
+                            JsonObject error = new JsonObject().put("error", event.left().getValue());
                             Renders.renderJson(request, error, 400);
                         }
                     }
@@ -240,7 +240,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                             final AtomicInteger callCount = new AtomicInteger(objects.size());
 
                             for (int i=0;i<objects.size();i++) {
-                                final JsonObject jsonObject = (JsonObject) objects.get(i);
+                                final JsonObject jsonObject = objects.getJsonObject(i);
 
                                 client.getReadOnlyID(jsonObject.getString("epName"), new Handler<JsonObject>() {
                                     @Override
@@ -252,17 +252,17 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                                 final String urlReadOnlyStr = etherpadPublicUrl + "/p/" + readOnlyId + "?userName=" + userDisplayName;
                                                 final URL urlReadOnly = new URL(urlReadOnlyStr);
                                                 final URI uriReadOnly = new URI(urlReadOnly.getProtocol(), urlReadOnly.getUserInfo(), urlReadOnly.getHost(), urlReadOnly.getPort(), urlReadOnly.getPath(), urlReadOnly.getQuery(), urlReadOnly.getRef());
-                                                jsonObject.putString("readOnlyUrl", uriReadOnly.toASCIIString());
+                                                jsonObject.put("readOnlyUrl", uriReadOnly.toASCIIString());
 
                                                 final String urlStr = etherpadPublicUrl + "/p/" + jsonObject.getString("epName") + "?userName=" + userDisplayName;
                                                 final URL url = new URL(urlStr);
                                                 final URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
-                                                jsonObject.putString("url", uri.toASCIIString());
+                                                jsonObject.put("url", uri.toASCIIString());
                                             } catch (MalformedURLException | URISyntaxException e) {
                                                 log.error("Can't generate etherpad-lite url", e);
                                             }
-                                            jsonObject.removeField("epName");
-                                            jsonObject.removeField("epGroupID");
+                                            jsonObject.remove("epName");
+                                            jsonObject.remove("epGroupID");
 
                                             if (callCount.decrementAndGet() == 0) {
                                                 Renders.renderJson(request, objects);
@@ -280,7 +280,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                 });
                             }
                         } else {
-                            JsonObject error = new JsonObject().putString("error", event.left().getValue());
+                            JsonObject error = new JsonObject().put("error", event.left().getValue());
                             Renders.renderJson(request, error, 400);
                         }
                     }
@@ -310,7 +310,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                 client.createAuthorIfNotExistsFor(user.getLogin(), new Handler<JsonObject>() {
                                     @Override
                                     public void handle(JsonObject event) {
-                                        if ("ok".equals(event.getField("status"))) {
+                                        if ("ok".equals(event.getString("status"))) {
                                             final String authorID = event.getString("authorID");
                                             // Create session for the user on the pad group
                                             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Paris"));
@@ -320,7 +320,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                             client.createSession(object.getString("epGroupID"), authorID, validUntil, new Handler<JsonObject>() {
                                                 @Override
                                                 public void handle(JsonObject event) {
-                                                    if ("ok".equals(event.getField("status"))) {
+                                                    if ("ok".equals(event.getString("status"))) {
                                                         final String session = event.getString("sessionID");
                                                         request.response().putHeader("Set-Cookie", "sessionID=" + session + ";max-age=" + 360 * 1000 + ";path=/;domain=" + domain).setStatusCode(200).end();
                                                     } else {
@@ -337,7 +337,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                 request.response().setStatusCode(404).end();
                             }
                         } else {
-                            JsonObject error = new JsonObject().putString("error", event.left().getValue());
+                            JsonObject error = new JsonObject().put("error", event.left().getValue());
                             Renders.renderJson(request, error, 400);
                         }
                     }
@@ -359,7 +359,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                     client.deleteSession(sessionID, new Handler<JsonObject>() {
                         @Override
                         public void handle(JsonObject event) {
-                            if ("ok".equals(event.getField("status"))) {
+                            if ("ok".equals(event.getString("status"))) {
                                 request.response().putHeader("Set-Cookie", "sessionID=deleted;max-age=-1;path=/;domain=" + domain).setStatusCode(200).end();
                             } else {
                                 //TODO check if render error because there is a redmine ticket about error log on session doesn't exist !!!!!
@@ -411,15 +411,15 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                                 Renders.renderJson(request, event.right().getValue(), 200);
                                             } else {
                                                 log.error("Fail to delete a pad on mongo backend from id : " + id + ", error : " + event.left().getValue());
-                                                Renders.renderError(request, new JsonObject().putString("error", event.left().getValue()));
+                                                Renders.renderError(request, new JsonObject().put("error", event.left().getValue()));
                                             }
                                         }
                                     });
                                 } else {
-                                    Renders.renderError(request, new JsonObject().putString("error", "Empty result from id : " + id));
+                                    Renders.renderError(request, new JsonObject().put("error", "Empty result from id : " + id));
                                 }
                             } else {
-                                Renders.renderError(request, new JsonObject().putString("error", event.left().getValue()));
+                                Renders.renderError(request, new JsonObject().put("error", event.left().getValue()));
                             }
                         }
                     });

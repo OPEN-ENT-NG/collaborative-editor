@@ -25,12 +25,12 @@ import net.atos.entng.collaborativeeditor.CollaborativeEditor;
 import org.entcore.common.http.request.JsonHttpServerRequest;
 import org.entcore.common.notification.TimelineHelper;
 import org.etherpad_lite_client.EPLiteClient;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.eventbus.Message;
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-import org.vertx.java.core.logging.impl.LoggerFactory;
+import io.vertx.core.Handler;
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -62,12 +62,12 @@ public class NotUsingPAD implements Handler<Long> {
     public void handle(Long event) {
         // Check the last edit file date on all entries
         final JsonObject query = new JsonObject();
-        final JsonObject projection = new JsonObject().putNumber("name", 1).putNumber("epName", 1)
-                .putNumber("owner", 1).putNumber("locale", 1).putNumber("daysBeforeNotification", 1);
+        final JsonObject projection = new JsonObject().put("name", 1).put("epName", 1)
+                .put("owner", 1).put("locale", 1).put("daysBeforeNotification", 1);
         mongo.find(CollaborativeEditor.COLLABORATIVEEDITOR_COLLECTION, query, null, projection, new Handler<Message<JsonObject>>() {
             @Override
             public void handle(Message<JsonObject> event) {
-                final JsonArray res = event.body().getArray("results");
+                final JsonArray res = event.body().getJsonArray("results");
                 if ("ok".equals(event.body().getString("status")) && res != null && res.size() > 0) {
                     for (Object object : res) {
                         if (!(object instanceof JsonObject)) continue;
@@ -75,8 +75,8 @@ public class NotUsingPAD implements Handler<Long> {
                         client.getLastEdited(elem.getString("epName"), new Handler<JsonObject>() {
                             @Override
                             public void handle(JsonObject event) {
-                                if ("ok".equals(event.getField("status"))) {
-                                    final Object lastEditedPad = event.getField("lastEdited");
+                                if ("ok".equals(event.getString("status"))) {
+                                    final Object lastEditedPad = event.getJsonObject("lastEdited");
                                     if (lastEditedPad != null) {
 
                                         final Long todayL = new Date().getTime();
@@ -85,20 +85,20 @@ public class NotUsingPAD implements Handler<Long> {
 
                                         final Integer daysBeforeNotification = elem.getInteger("daysBeforeNotification", 0);
                                         final String id = elem.getString("_id");
-                                        final JsonObject updateQuery = new JsonObject().putString("_id", id);
+                                        final JsonObject updateQuery = new JsonObject().put("_id", id);
 
                                         if (numberOfDay > numberDaysWithoutActivity && daysBeforeNotification.intValue() == 0) {
                                             final JsonObject params = new JsonObject()
-                                                    .putString("resourceName", elem.getString("name", ""))
-                                                    .putString("resourceDate",  new SimpleDateFormat("dd/MM/yyyy").format(lastEditedPadL))
-                                                    .putString("collaborativeeditorUri", host + "/collaborativeeditor#/view/" + id);
+                                                    .put("resourceName", elem.getString("name", ""))
+                                                    .put("resourceDate",  new SimpleDateFormat("dd/MM/yyyy").format(lastEditedPadL))
+                                                    .put("collaborativeeditorUri", host + "/collaborativeeditor#/view/" + id);
 
                                             final List<String> recipients = new ArrayList<String>();
-                                            recipients.add(elem.getObject("owner").getString("userId"));
+                                            recipients.add(elem.getJsonObject("owner").getString("userId"));
                                             final String locale = elem.getString("locale", "fr");
 
                                             timelineHelper.notifyTimeline(new JsonHttpServerRequest(new JsonObject()
-                                                            .putObject("headers", new JsonObject().putString("Accept-Language", locale))),
+                                                            .put("headers", new JsonObject().put("Accept-Language", locale))),
                                                     "collaborativeeditor.unused", null, recipients, null, params);
 
                                             final MongoUpdateBuilder modifier = new MongoUpdateBuilder();
