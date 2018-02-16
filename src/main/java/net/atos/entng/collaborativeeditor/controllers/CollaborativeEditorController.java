@@ -30,12 +30,12 @@ import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.mongodb.MongoDbControllerHelper;
 import org.entcore.common.user.UserInfos;
 import org.entcore.common.user.UserUtils;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.http.HttpServerRequest;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
-import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.platform.Container;
+import io.vertx.core.json.JsonObject;
+
 
 import java.util.Map;
 
@@ -54,8 +54,8 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
     }
 
     @Override
-    public void init(Vertx vertx, Container container, RouteMatcher rm, Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
-        super.init(vertx, container, rm, securedActions);
+    public void init(Vertx vertx, JsonObject config, RouteMatcher rm, Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
+        super.init(vertx, config, rm, securedActions);
         eventStore = EventStoreFactory.getFactory().getEventStore(CollaborativeEditor.class.getSimpleName());
 
     }
@@ -65,9 +65,8 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
      * @param vertx vertx
      * @param collection MongoDB collection to request.
      */
-    public CollaborativeEditorController(Vertx vertx, String collection, Container container) {
+    public CollaborativeEditorController(Vertx vertx, String collection, JsonObject config) {
         super(collection);
-        JsonObject config = container.config();
         this.etherpadHelper = new EtherpadHelper(vertx, collection, config.getString("etherpad-url", null),
                 config.getString("etherpad-api-key", null), config.getString("etherpad-public-url", null),
                 config.getBoolean("trust-all-certificate", true), config.getString("etherpad-domain", null));
@@ -167,10 +166,10 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
                         return;
                     }
                     JsonObject params = new JsonObject();
-                    params.putString("uri", "/userbook/annuaire#" + user.getUserId() + "#" + user.getType());
-                    params.putString("username", user.getUsername());
-                    params.putString("collaborativeeditorUri", "/collaborativeeditor#/view/" + id);
-                    params.putString("resourceUri", params.getString("collaborativeeditorUri"));
+                    params.put("uri", "/userbook/annuaire#" + user.getUserId() + "#" + user.getType());
+                    params.put("username", user.getUsername());
+                    params.put("collaborativeeditorUri", "/collaborativeeditor#/view/" + id);
+                    params.put("resourceUri", params.getString("collaborativeeditorUri"));
 
                     shareJsonSubmit(request, "collaborativeeditor.share", false, params, "name");
                 }

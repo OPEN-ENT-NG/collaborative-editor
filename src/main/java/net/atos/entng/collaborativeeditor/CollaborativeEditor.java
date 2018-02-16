@@ -20,6 +20,7 @@
 package net.atos.entng.collaborativeeditor;
 
 import fr.wseduc.cron.CronTrigger;
+import io.vertx.core.Vertx;
 import net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorController;
 import net.atos.entng.collaborativeeditor.cron.NotUsingPAD;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorSearchingEvents;
@@ -47,7 +48,7 @@ public class CollaborativeEditor extends BaseServer {
      * Entry point of the Vert.x module
      */
     @Override
-    public void start() {
+    public void start() throws Exception {
         super.start();
 
         MongoDbConf conf = MongoDbConf.getInstance();
@@ -55,7 +56,7 @@ public class CollaborativeEditor extends BaseServer {
 
         setDefaultResourceFilter(new ShareAndOwner());
 
-        addController(new CollaborativeEditorController(vertx, COLLABORATIVEEDITOR_COLLECTION, container));
+        addController(new CollaborativeEditorController(vertx, COLLABORATIVEEDITOR_COLLECTION, config));
         // Subscribe to events published for searching
         final EPLiteClient epClient = new EPLiteClient(vertx, config.getString("etherpad-public-url",
                 config.getString("etherpad-url", "")), config.getString("etherpad-api-key",""), config.getBoolean("trust-all-certificate", true));
@@ -65,16 +66,17 @@ public class CollaborativeEditor extends BaseServer {
                     new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION)));
         }
 
-        final String unusedPadCron = container.config().getString("unusedPadCron", "0 0 23 * * ?");
-        final TimelineHelper timelineHelper = new TimelineHelper(vertx, vertx.eventBus(), container);
+        final String unusedPadCron = config.getString("unusedPadCron", "0 0 23 * * ?");
+        final TimelineHelper timelineHelper = new TimelineHelper(vertx, vertx.eventBus(), config);
 
         try {
             new CronTrigger(vertx, unusedPadCron).schedule(
-                    new NotUsingPAD(timelineHelper, epClient, container.config())
+                    new NotUsingPAD(timelineHelper, epClient, config)
             );
         } catch (ParseException e) {
             log.fatal("[Collaborative Editor] Invalid cron expression.", e);
-            vertx.stop();
+            //vertx.stop();
+            vertx.close();
         }
     }
 }
