@@ -47,7 +47,6 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         $scope.action = 'collaborativeeditor-create';
         template.open('collaborativeeditor', 'collaborativeeditor-create');
         template.close('etherpad');
-
     };
 
 	$scope.redirect = function(path){
