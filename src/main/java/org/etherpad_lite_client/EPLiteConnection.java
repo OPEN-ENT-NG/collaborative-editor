@@ -29,14 +29,11 @@ import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import jdk.nashorn.internal.objects.Global;
-import jdk.nashorn.internal.parser.JSONParser;
-import jdk.nashorn.internal.runtime.Context;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
-import javax.net.ssl.*;
 import java.net.URI;
 import java.net.URL;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -182,38 +179,44 @@ public class EPLiteConnection {
      * Converts the API resonse's JSON string into a HashMap.
      */
     private void handleResponse(String jsonString,  final Handler<JsonObject> handler) {
-        JSONParser parser = new JSONParser(jsonString, new Global(Context.getContext()), true);
-        Map response = (Map) parser.parse();
-        // Act on the response code
-        if (!response.get("code").equals(null)) {
-            int code = ((Long) response.get("code")).intValue();
-            switch (code) {
-                // Valid code, parse the response
-                case CODE_OK:
-                    final HashMap datas = (HashMap) response.get("data");
-                    handler.handle(new JsonObject((datas != null) ? datas : new HashMap<String, Object>()).put("status", "ok"));
-                    break;
-                    // Invalid code, indicate the error message
-                case CODE_INVALID_PARAMETERS:
-                    handler.handle(new JsonObject().put("status", "error").put("message", "CODE_INVALID_PARAMETERS : " + (String)response.get("message")));
-                    break;
-                case CODE_INTERNAL_ERROR:
-                    handler.handle(new JsonObject().put("status", "error").put("message", "CODE_INTERNAL_ERROR : " + (String)response.get("message")));
-                    break;
-                case CODE_INVALID_API_KEY:
-                    handler.handle(new JsonObject().put("status", "error").put("message", "CODE_INVALID_API_KEY : " + (String)response.get("message")));
-                    break;
-                case CODE_INVALID_METHOD:
-                    handler.handle(new JsonObject().put("status", "error").put("message", "CODE_INVALID_METHOD : " + (String)response.get("message")));
-                    break;
-                default:
-                    handler.handle(new JsonObject().put("status", "error").put("message",
-                            "An unknown error has occurred while handling the response: " + jsonString));
+        try {
+            JSONParser parser = new JSONParser();
+            Map response = (Map) parser.parse(jsonString);
+            // Act on the response code
+            if (!response.get("code").equals(null)) {
+                int code = ((Long) response.get("code")).intValue();
+                switch (code) {
+                    // Valid code, parse the response
+                    case CODE_OK:
+                        final HashMap datas = (HashMap) response.get("data");
+                        handler.handle(new JsonObject((datas != null) ? datas : new HashMap<String, Object>()).put("status", "ok"));
+                        break;
+                        // Invalid code, indicate the error message
+                    case CODE_INVALID_PARAMETERS:
+                        handler.handle(new JsonObject().put("status", "error").put("message", "CODE_INVALID_PARAMETERS : " + (String)response.get("message")));
+                        break;
+                    case CODE_INTERNAL_ERROR:
+                        handler.handle(new JsonObject().put("status", "error").put("message", "CODE_INTERNAL_ERROR : " + (String)response.get("message")));
+                        break;
+                    case CODE_INVALID_API_KEY:
+                        handler.handle(new JsonObject().put("status", "error").put("message", "CODE_INVALID_API_KEY : " + (String)response.get("message")));
+                        break;
+                    case CODE_INVALID_METHOD:
+                        handler.handle(new JsonObject().put("status", "error").put("message", "CODE_INVALID_METHOD : " + (String)response.get("message")));
+                        break;
+                    default:
+                        handler.handle(new JsonObject().put("status", "error").put("message",
+                                "An unknown error has occurred while handling the response: " + jsonString));
+                }
+                // No response code, something's really wrong
+            } else {
+                handler.handle(new JsonObject().put("status", "error").put("message",
+                        "An unknown error has occurred while handling the response: " + jsonString));
             }
-            // No response code, something's really wrong
-        } else {
+        } catch (ParseException e) {
+            log.error("Unable to parse JSON response (" + jsonString + ")" + e);
             handler.handle(new JsonObject().put("status", "error").put("message",
-                    "An unknown error has occurred while handling the response: " + jsonString));
+                    "Unable to parse JSON response (" + jsonString + "): " + e.getMessage()));
         }
     }
 
