@@ -1,19 +1,14 @@
 {
-	"collaborativeeditor.title": "Pad",
-	"collaborativeeditor.new": "Créer un Pad",
-	"collaborativeeditor.save": "Sauvegarder",
-	"collaborativeeditor.name": "Nom",
-	"collaborativeeditor.description": "Description",
-	
-	"collaborativeeditor.read": "Lecteur",
-	"collaborativeeditor.contrib": "Contributeur",
-	"collaborativeeditor.manager": "Gestionnaire",
+    "collaborativeeditor.title": "Pad",
+    "collaborativeeditor.new": "Créer un Pad",
+    "collaborativeeditor.save": "Sauvegarder",
+    "collaborativeeditor.name": "Nom",
+    "collaborativeeditor.description": "Description",
+    "collaborativeeditor.read": "Lecteur",
+    "collaborativeeditor.contrib": "Contributeur",
+    "collaborativeeditor.manager": "Gestionnaire",
     "collaborativeeditor.delete.confirm": "Voulez-vous vraiment supprimer le(s) Pad sélectionné(s) ?",
-	
-	
-	"collaborativeeditor.or.page.notfound.or.unauthorized": "Le Pad ou la page demandé n'existe pas, a été supprimé, ou vous n'avez pas les droits pour y accéder.",
-	
-
+    "collaborativeeditor.or.page.notfound.or.unauthorized": "Le Pad ou la page demandé n'existe pas, a été supprimé, ou vous n'avez pas les droits pour y accéder.",
     "group.AdminLocal": "Tous les administrateurs locaux de {0}.",
     "group.Personnel": "Tous les personnels du groupe {0}.",
     "group.Relative": "Tous les parents du groupe {0}.",
@@ -26,12 +21,11 @@
     "group.class.Teacher": "Tous les enseignants de la classe {0}.",
     "group.class.Guest": "Tous les invités de la classe {0}.",
     "group.contrib": "Tous les contributeurs de la communauté {0}.",
-    "group.manager": "Tous les gestionnnaires de la communauté {0}.",
+    "group.manager": "Tous les gestionnaires de la communauté {0}.",
     "group.read": "Tous les lecteurs de la communauté {0}.",
     "group.school.Personnel": "Tous les personnels de l'{0}.",
     "group.school.Relative": "Tous les parents de l'{0}.",
     "group.school.Student": "Tous les élèves de l'{0}.",
     "group.school.Teacher": "Tous les enseignants de l'{0}.",
     "group.school.Guest": "Tous les invités de l'{0}."
-
 }
