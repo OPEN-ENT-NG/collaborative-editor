@@ -16,25 +16,16 @@
             <div class="row">
                 <div class="twelve cell">
                     <div class="seven cell">
-
-                        <app-title ng-if="!collaborativeeditor || !collaborativeeditor._id">
-                            <h1>
-                                <i class="collaborativeeditor"></i>
-                                <a ng-click="openMainPage()">
-                                    <i18n>collaborativeeditor.title</i18n>
-                                </a>
-                            </h1>
-                        </app-title>
-
-                        <div class="row" ng-if="collaborativeeditor && collaborativeeditor._id">
-                            <side-panel ng-if="selectedCollaborativeeditor" class="zero-mobile">
+                        <div class="row">
+                            <side-panel class="zero-mobile">
                                 <container template="side-panel"></container>
                             </side-panel>
 
                             <app-title>
                                 <h1>
-                                    <a ng-click="openMainPage()"><i18n>collaborativeeditor.title</i18n></a>
-                                    <span subtitle ng-if="selectedCollaborativeeditor.name && selectedCollaborativeeditor.name.trim().length > 0">
+                                    <i class="collaborativeeditor"></i>
+                                    <span ng-click="openMainPage()"><i18n>collaborativeeditor.title</i18n></span>
+                                    <span ng-if="selectedCollaborativeeditor.name && selectedCollaborativeeditor.name.trim().length > 0">
                                         / [[collaborativeeditor.name]]
                                     </span>
                                 </h1>
