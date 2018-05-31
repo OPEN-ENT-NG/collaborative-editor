@@ -182,4 +182,31 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
         removeShare(request, false);
     }
 
+    @Put("/share/resource/:id")
+    @ApiDoc("Allows to get the current sharing of the collaborative editor given by its identifier")
+    @SecuredAction(value = "collaborativeeditor.manager", type = ActionType.RESOURCE)
+    public void shareResource(final HttpServerRequest request) {
+        UserUtils.getUserInfos(eb, request, new Handler<UserInfos>() {
+            @Override
+            public void handle(final UserInfos user) {
+                if (user != null) {
+                    final String id = request.params().get("id");
+                    if(id == null || id.trim().isEmpty()) {
+                        badRequest(request, "invalid.id");
+                        return;
+                    }
+
+                    JsonObject params = new JsonObject();
+                    params.put("uri", "/userbook/annuaire#" + user.getUserId() + "#" + user.getType());
+                    params.put("username", user.getUsername());
+                    params.put("collaborativeeditorUri", "/collaborativeeditor#/view/" + id);
+                    params.put("resourceUri", params.getString("collaborativeeditorUri"));
+
+                    shareResource(request, "collaborativeeditor.share", false, params, "name");
+                }
+            }
+        });
+    }
+
+
 }
