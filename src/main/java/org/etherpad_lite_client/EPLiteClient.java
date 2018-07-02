@@ -43,11 +43,16 @@ public class EPLiteClient {
     public EPLiteConnection connection;
 
     /**
+     * padUrl
+     */
+    private String padUrl;
+
+    /**
      * Initializes a new org.etherpad_lite_client.EPLiteClient object. The default Etherpad Lite API version (in
      * DEFAULT_API_VERSION) will be used.
      */
     public EPLiteClient(Vertx vertx, String url, String apiKey) {
-        this.connection = new EPLiteConnection(vertx, url, apiKey, DEFAULT_API_VERSION, DEFAULT_TRUST_ALL_CERTIFICATE);
+        this(vertx, url, apiKey, DEFAULT_API_VERSION, DEFAULT_TRUST_ALL_CERTIFICATE);
     }
 
     /**
@@ -55,7 +60,7 @@ public class EPLiteClient {
      * used.
      */
     public EPLiteClient(Vertx vertx, String url, String apiKey, Boolean trustAll) {
-        this.connection = new EPLiteConnection(vertx, url, apiKey, DEFAULT_API_VERSION, trustAll);
+        this(vertx, url, apiKey, DEFAULT_API_VERSION, trustAll);
     }
 
     /**
@@ -64,6 +69,7 @@ public class EPLiteClient {
      */
     public EPLiteClient(Vertx vertx, String url, String apiKey, String apiVersion, Boolean trustAll) {
         this.connection = new EPLiteConnection(vertx, url, apiKey, apiVersion, trustAll);
+        this.padUrl = url;
     }
 
     // Groups
@@ -482,5 +488,9 @@ public class EPLiteClient {
         } else {
             return false;
         }
+    }
+
+    public String getPadUrl() {
+        return this.padUrl;
     }
 }

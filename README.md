@@ -45,7 +45,6 @@ Déclarer l'application dans la liste :
     "mode" : "${mode}",
     "etherpad-domain": "domaine.fr",
     "etherpad-url": "http://host.domaine.fr",
-    "etherpad-public-url": "http://host.domaine.fr",
     "etherpad-api-key" : "clef",
     "trust-all-certificate" : true,
     "unusedPadCron" : "0 0 23 * * ?",
@@ -55,11 +54,40 @@ Déclarer l'application dans la liste :
   }
 }
 </pre>
+
+Possibilité de gérer des domaines multiples :
+Déclarer l'application dans la liste :
+<pre>
+{
+  "name": "net.atos~collaborative-editor~0.1-SNAPSHOT",
+  "config": {
+    "main" : "net.atos.entng.collaborativeeditor.CollaborativeEditor",
+    "port" : 8668,
+    "app-name" : "Collaborative Editor",
+    "app-address" : "/collaborativeeditor",
+    "app-icon" : "collaborativeeditor-large",
+    "host": "${host}",
+    "ssl" : $ssl,
+    "userbook-host": "${host}",
+    "integration-mode" : "HTTP",
+    "app-registry.port" : 8012,
+    "mode" : "${mode}",
+    "domains": [{"etherpad-domain": "domaine1.fr", "etherpad-url": "http://host.domaine1.fr"}, {"etherpad-domain": "domaine2.fr", "etherpad-url": "http://host.domaine2.fr/pad"}],
+    "etherpad-api-key" : "clef",
+    "trust-all-certificate" : true,
+    "unusedPadCron" : "0 0 23 * * ?",
+    "numberDaysWithoutActivity" : 90,
+    "recurringNotificationDays" : 15,
+    "entcore.port" : 8009
+  }
+}
+</pre>
+
 Configurer le domaine, l'url du service Etherpad et la clef pour pouvoir communiquer avec l'api et l'éditeur. Ces informations doivent être transmises par l'hébergeur :
 
  - "etherpad-domain": *domaine.fr* est à remplacer par "picardie.fr" dans le cadre de Léo
- 
- - "etherpad-url" et "etherpad-public-url": *http://host.domaine.fr* est à remplacer par l'url de l'hébergeur du Pad (à noter que le  domaine de deuxième niveau doit être identique à celui de l'ENT)
+
+ - "etherpad-url" : *http://host.domaine.fr* est à remplacer par l'url de l'hébergeur du Pad (à noter que le  domaine de deuxième niveau doit être identique à celui de l'ENT)
 
  - "etherpad-api-key" : *clef* est à remplacer par la clef de l'hébergeur du service Pad
 

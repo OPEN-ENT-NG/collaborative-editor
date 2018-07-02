@@ -65,11 +65,9 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
      * @param vertx vertx
      * @param collection MongoDB collection to request.
      */
-    public CollaborativeEditorController(Vertx vertx, String collection, JsonObject config) {
+    public CollaborativeEditorController(Vertx vertx, String collection, EtherpadHelper etherpadHelper) {
         super(collection);
-        this.etherpadHelper = new EtherpadHelper(vertx, collection, config.getString("etherpad-url", null),
-                config.getString("etherpad-api-key", null), config.getString("etherpad-public-url", null),
-                config.getBoolean("trust-all-certificate", true), config.getString("etherpad-domain", null));
+        this.etherpadHelper = etherpadHelper;
     }
 
     @Get("")
