@@ -20,16 +20,15 @@
 package net.atos.entng.collaborativeeditor;
 
 import fr.wseduc.cron.CronTrigger;
-import io.vertx.core.Vertx;
 import net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorController;
 import net.atos.entng.collaborativeeditor.cron.NotUsingPAD;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorSearchingEvents;
+import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
 import org.entcore.common.http.BaseServer;
 import org.entcore.common.http.filter.ShareAndOwner;
 import org.entcore.common.mongodb.MongoDbConf;
 import org.entcore.common.notification.TimelineHelper;
 import org.entcore.common.service.impl.MongoDbSearchService;
-import org.etherpad_lite_client.EPLiteClient;
 
 import java.text.ParseException;
 
@@ -56,11 +55,11 @@ public class CollaborativeEditor extends BaseServer {
 
         setDefaultResourceFilter(new ShareAndOwner());
 
-        addController(new CollaborativeEditorController(vertx, COLLABORATIVEEDITOR_COLLECTION, config));
-        // Subscribe to events published for searching
-        final EPLiteClient epClient = new EPLiteClient(vertx, config.getString("etherpad-public-url",
-                config.getString("etherpad-url", "")), config.getString("etherpad-api-key",""), config.getBoolean("trust-all-certificate", true));
+        final EtherpadHelper etherpadHelper = new EtherpadHelper(vertx, COLLABORATIVEEDITOR_COLLECTION, config.getJsonArray("domains"), config.getString("etherpad-url", null),
+                config.getString("etherpad-api-key", null), config.getBoolean("trust-all-certificate", true), config.getString("etherpad-domain", null));
 
+        addController(new CollaborativeEditorController(vertx, COLLABORATIVEEDITOR_COLLECTION, etherpadHelper));
+        // Subscribe to events published for searching
         if (config.getBoolean("searching-event", true)) {
             setSearchingEvents(new CollaborativeEditorSearchingEvents(vertx,
                     new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION)));
@@ -71,7 +70,7 @@ public class CollaborativeEditor extends BaseServer {
 
         try {
             new CronTrigger(vertx, unusedPadCron).schedule(
-                    new NotUsingPAD(timelineHelper, epClient, config)
+                    new NotUsingPAD(timelineHelper, etherpadHelper.getFirstClient(), config)
             );
         } catch (ParseException e) {
             log.fatal("[Collaborative Editor] Invalid cron expression.", e);
