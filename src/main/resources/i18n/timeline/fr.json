@@ -5,5 +5,6 @@
     "timeline.collaborativeeditor.has.shared": "vous a partagé le Pad",
     "timeline.notify.unused.title": "Le PAD '",
     "timeline.notify.unused.title.after": "' n’a pas été modifié depuis le ",
-    "timeline.notify.unused.body": "Vous êtes invités à faire un export de votre travail et à supprimer le PAD si vous n’en avez plus l’usage."
+    "timeline.notify.unused.body": "Vous êtes invités à faire un export de votre travail et à supprimer le PAD si vous n’en avez plus l’usage.",
+    "collaborativeeditor.push-notif.share": "Pad: Partage d'un Pad"
 }

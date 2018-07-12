@@ -27,5 +27,6 @@
     "group.school.Relative": "Tous les parents de l'{0}.",
     "group.school.Student": "Tous les élèves de l'{0}.",
     "group.school.Teacher": "Tous les enseignants de l'{0}.",
-    "group.school.Guest": "Tous les invités de l'{0}."
+    "group.school.Guest": "Tous les invités de l'{0}.",
+    "collaborativeeditor.push-notif.share.body": "{0} vous a partagé un Pad"
 }
