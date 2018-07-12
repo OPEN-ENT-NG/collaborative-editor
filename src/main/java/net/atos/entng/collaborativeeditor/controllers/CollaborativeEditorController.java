@@ -22,6 +22,7 @@ package net.atos.entng.collaborativeeditor.controllers;
 import fr.wseduc.rs.*;
 import fr.wseduc.security.ActionType;
 import fr.wseduc.security.SecuredAction;
+import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.request.RequestUtils;
 import net.atos.entng.collaborativeeditor.CollaborativeEditor;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
@@ -168,6 +169,17 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
                     params.put("username", user.getUsername());
                     params.put("collaborativeeditorUri", "/collaborativeeditor#/view/" + id);
                     params.put("resourceUri", params.getString("collaborativeeditorUri"));
+
+                    JsonObject pushNotif = new JsonObject()
+                            .put("title", "collaborativeeditor.push-notif.share")
+                            .put("body", I18n.getInstance()
+                                .translate("collaborativeeditor.push-notif.share.body",
+                                        getHost(request),
+                                        I18n.acceptLanguage(request),
+                                        user.getUsername()
+                                ));
+
+                    params.put("pushNotif", pushNotif);
 
                     shareJsonSubmit(request, "collaborativeeditor.share", false, params, "name");
                 }
