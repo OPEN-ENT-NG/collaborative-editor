@@ -214,6 +214,17 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
                     params.put("collaborativeeditorUri", "/collaborativeeditor#/view/" + id);
                     params.put("resourceUri", params.getString("collaborativeeditorUri"));
 
+                    JsonObject pushNotif = new JsonObject()
+                            .put("title", "collaborativeeditor.push-notif.share")
+                            .put("body", I18n.getInstance()
+                                    .translate("collaborativeeditor.push-notif.share.body",
+                                            getHost(request),
+                                            I18n.acceptLanguage(request),
+                                            user.getUsername()
+                                    ));
+
+                    params.put("pushNotif", pushNotif);
+
                     shareResource(request, "collaborativeeditor.share", false, params, "name");
                 }
             }
