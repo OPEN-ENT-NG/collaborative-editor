@@ -441,8 +441,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         });
     }
 
-    private static String getAuthDomain(final HttpServerRequest request) {
-        final String host = StringUtils.trimToBlank(Renders.getHost(request));
+    private static String getAuthDomain(final String host) {
         String domain = "";
 
         final List<String> levels = StringUtils.split(StringUtils.split(host, ":").get(0), "\\.");
@@ -458,7 +457,18 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         return domain;
     }
 
+    private static String getAuthDomain(final HttpServerRequest request) {
+        final String host = StringUtils.trimToBlank(Renders.getHost(request));
+        return getAuthDomain(host);
+    }
+
     public EPLiteClient getFirstClient() {
         return clientByDomain.values().iterator().next();
+    }
+
+    public EPLiteClient getClientFromHost(final String host) {
+        String hostname = host.split("://").length > 0 ? host.split("://")[1] : host;
+        final String domain = getAuthDomain(hostname);
+        return clientByDomain.get(domain);
     }
 }

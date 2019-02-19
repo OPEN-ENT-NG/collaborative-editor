@@ -22,6 +22,7 @@ package net.atos.entng.collaborativeeditor;
 import fr.wseduc.cron.CronTrigger;
 import net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorController;
 import net.atos.entng.collaborativeeditor.cron.NotUsingPAD;
+import net.atos.entng.collaborativeeditor.events.CollaborativeEditorRepositoryEvents;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorSearchingEvents;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
 import org.entcore.common.http.BaseServer;
@@ -64,7 +65,7 @@ public class CollaborativeEditor extends BaseServer {
             setSearchingEvents(new CollaborativeEditorSearchingEvents(vertx,
                     new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION)));
         }
-
+        setRepositoryEvents(new CollaborativeEditorRepositoryEvents(vertx,etherpadHelper));
         final String unusedPadCron = config.getString("unusedPadCron", "0 0 23 * * ?");
         final TimelineHelper timelineHelper = new TimelineHelper(vertx, vertx.eventBus(), config);
 
