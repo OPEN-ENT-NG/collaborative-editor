@@ -15,6 +15,7 @@ import io.vertx.core.logging.LoggerFactory;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
 import org.entcore.common.mongodb.MongoDbConf;
 import org.entcore.common.user.RepositoryEvents;
+import org.entcore.common.utils.StringUtils;
 import org.etherpad_lite_client.EPLiteClient;
 
 import java.io.File;
@@ -63,9 +64,7 @@ public class CollaborativeEditorRepositoryEvents implements RepositoryEvents {
 			if (fileName == null) {
 				fileName = resources.getString("name");
 			}
-			if (fileName != null && fileName.contains("/")) {
-				fileName = fileName.replaceAll("/", "-");
-			}
+			fileName = StringUtils.replaceForbiddenCharacters(fileName);
 			if (!usedFileName.add(fileName)) {
 				fileName += "_" + fileId;
 			}
