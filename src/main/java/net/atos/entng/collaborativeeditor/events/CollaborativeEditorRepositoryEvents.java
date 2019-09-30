@@ -114,7 +114,7 @@ public class CollaborativeEditorRepositoryEvents implements RepositoryEvents {
 	}
 
 	@Override
-	public void exportResources(String exportId, String userId, JsonArray g, String exportPath, String locale,
+	public void exportResources(JsonArray resourcesIds, String exportId, String userId, JsonArray g, String exportPath, String locale,
 			String host, Handler<Boolean> handler)
 	{
 		QueryBuilder findByAuthor = QueryBuilder.start("owner.userId").is(userId);
@@ -125,7 +125,18 @@ public class CollaborativeEditorRepositoryEvents implements RepositoryEvents {
 		);
 
 		QueryBuilder findByAuthorOrShared = QueryBuilder.start().or(findByAuthor.get(), findByShared.get());
-		final JsonObject query = MongoQueryBuilder.build(findByAuthorOrShared);
+
+		JsonObject query;
+
+		if(resourcesIds == null)
+			query = MongoQueryBuilder.build(findByAuthorOrShared);
+		else
+		{
+			QueryBuilder limitToResources = findByAuthorOrShared.and(
+				QueryBuilder.start("_id").in(resourcesIds).get()
+			);
+			query = MongoQueryBuilder.build(limitToResources);
+		}
 
 		final AtomicBoolean exported = new AtomicBoolean(false);
 		final String collection = MongoDbConf.getInstance().getCollection();
