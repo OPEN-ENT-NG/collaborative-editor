@@ -115,30 +115,47 @@ public class CollaborativeEditorRepositoryEvents implements RepositoryEvents {
 
 	@Override
 	public void exportResources(String exportId, String userId, JsonArray g, String exportPath, String locale,
-			String host, Handler<Boolean> handler) {
+			String host, Handler<Boolean> handler)
+	{
 		QueryBuilder findByAuthor = QueryBuilder.start("owner.userId").is(userId);
-		QueryBuilder findByShared = QueryBuilder.start().or(QueryBuilder.start("shared.userId").is(userId).get(),
-				QueryBuilder.start("shared.groupId").in(g).get());
+
+		QueryBuilder findByShared = QueryBuilder.start().or(
+			QueryBuilder.start("shared.userId").is(userId).get(),
+			QueryBuilder.start("shared.groupId").in(g).get()
+		);
+
 		QueryBuilder findByAuthorOrShared = QueryBuilder.start().or(findByAuthor.get(), findByShared.get());
 		final JsonObject query = MongoQueryBuilder.build(findByAuthorOrShared);
+
 		final AtomicBoolean exported = new AtomicBoolean(false);
 		final String collection = MongoDbConf.getInstance().getCollection();
-		mongo.find(collection, query, new Handler<Message<JsonObject>>() {
+
+		mongo.find(collection, query, new Handler<Message<JsonObject>>()
+		{
 			@Override
-			public void handle(Message<JsonObject> event) {
+			public void handle(Message<JsonObject> event)
+			{
 				JsonArray results = event.body().getJsonArray("results");
-				if ("ok".equals(event.body().getString("status")) && results != null) {
-					createExportDirectory(exportPath, locale, new Handler<String>() {
+				if ("ok".equals(event.body().getString("status")) && results != null)
+				{
+					createExportDirectory(exportPath, locale, new Handler<String>()
+					{
 						@Override
-						public void handle(String path) {
-							if (path != null) {
+						public void handle(String path)
+						{
+							if (path != null)
+							{
 								exportFiles(helper.getClientFromHost(host), results, path, new HashSet<String>(), exported, handler);
-							} else {
+							}
+							else
+							{
 								handler.handle(exported.get());
 							}
 						}
 					});
-				} else {
+				}
+				else
+				{
 					log.error("Collaborative Editor : Could not proceed query " + query.encode(),
 							event.body().getString("message"));
 					handler.handle(exported.get());
