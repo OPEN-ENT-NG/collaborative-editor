@@ -76,12 +76,10 @@ public class NotUsingPAD implements Handler<Long> {
                             @Override
                             public void handle(JsonObject event) {
                                 if ("ok".equals(event.getString("status"))) {
-                                    final Object lastEditedPad = event.getJsonObject("lastEdited");
+                                    final Long lastEditedPad = event.getLong("lastEdited");
                                     if (lastEditedPad != null) {
-
                                         final Long todayL = new Date().getTime();
-                                        final Long lastEditedPadL = new Date(Long.parseLong(lastEditedPad.toString())).getTime();
-                                        final Long numberOfDay = (Math.abs(todayL - lastEditedPadL)) / (1000*60*60*24);
+                                        final Long numberOfDay = (Math.abs(todayL - lastEditedPad)) / (1000*60*60*24);
 
                                         final Integer daysBeforeNotification = elem.getInteger("daysBeforeNotification", 0);
                                         final String id = elem.getString("_id");
@@ -90,7 +88,7 @@ public class NotUsingPAD implements Handler<Long> {
                                         if (numberOfDay > numberDaysWithoutActivity && daysBeforeNotification.intValue() == 0) {
                                             final JsonObject params = new JsonObject()
                                                     .put("resourceName", elem.getString("name", ""))
-                                                    .put("resourceDate",  new SimpleDateFormat("dd/MM/yyyy").format(lastEditedPadL))
+                                                    .put("resourceDate",  new SimpleDateFormat("dd/MM/yyyy").format(lastEditedPad))
                                                     .put("collaborativeeditorUri", host + "/collaborativeeditor#/view/" + id);
 
                                             final List<String> recipients = new ArrayList<String>();
