@@ -467,7 +467,8 @@ public class EtherpadHelper extends MongoDbControllerHelper {
     }
 
     public EPLiteClient getClientFromHost(final String host) {
-        String hostname = host.split("://").length > 0 ? host.split("://")[1] : host;
+        String[] s = host.split("://");
+        String hostname = s.length > 1 ? s[1] : s[0];
         final String domain = getAuthDomain(hostname);
         return clientByDomain.get(domain);
     }
