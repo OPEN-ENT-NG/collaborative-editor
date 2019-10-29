@@ -10,37 +10,57 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
+import org.entcore.common.service.impl.MongoDbRepositoryEvents;
 import org.entcore.common.mongodb.MongoDbConf;
 import org.entcore.common.user.RepositoryEvents;
 import org.entcore.common.utils.StringUtils;
+import org.entcore.common.utils.FileUtils;
+import org.entcore.common.utils.StringUtils;
+import org.entcore.common.folders.impl.DocumentHelper;
 import org.etherpad_lite_client.EPLiteClient;
 
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class CollaborativeEditorRepositoryEvents implements RepositoryEvents {
+public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents {
 
 	private static final Logger log = LoggerFactory.getLogger(CollaborativeEditorRepositoryEvents.class);
 	private final MongoDb mongo = MongoDb.getInstance();
 	private final Vertx vertx;
 	private final EtherpadHelper helper;
 
-	public CollaborativeEditorRepositoryEvents(Vertx vertx, EtherpadHelper helper) {
+	private final Map<String, Map<String, JsonObject>> oldPadsToNewPads = new ConcurrentHashMap<String, Map<String, JsonObject>>();
+
+	public CollaborativeEditorRepositoryEvents(Vertx vertx, EtherpadHelper helper)
+	{
+		super(vertx);
 		this.vertx = vertx;
 		this.helper = helper;
 	}
 
-	private void createExportDirectory(String exportPath, String locale, final Handler<String> handler) {
+	@Override
+	protected void createExportDirectory(String exportPath, String locale, final Handler<String> handler)
+	{
 		final String path = exportPath + File.separator
 				+ I18n.getInstance().translate("collaborativeeditor.title", I18n.DEFAULT_DOMAIN, locale);
-		vertx.fileSystem().mkdir(path, new Handler<AsyncResult<Void>>() {
+
+		vertx.fileSystem().mkdir(path, new Handler<AsyncResult<Void>>()
+		{
 			@Override
-			public void handle(AsyncResult<Void> event) {
+			public void handle(AsyncResult<Void> event)
+			{
 				if (event.succeeded()) {
 					handler.handle(path);
 				} else {
@@ -52,36 +72,52 @@ public class CollaborativeEditorRepositoryEvents implements RepositoryEvents {
 	}
 
 	private void exportFiles(EPLiteClient client, final JsonArray results, String exportPath, Set<String> usedFileName,
-			final AtomicBoolean exported, final Handler<Boolean> handler) {
-		if (results.isEmpty()) {
+			final AtomicBoolean exported, final Handler<Boolean> handler)
+	{
+		if (results.isEmpty())
+		{
 			exported.set(true);
 			log.info("Collaborative Editor exported successfully to : " + exportPath);
 			handler.handle(exported.get());
-		} else {
+		}
+		else
+		{
 			JsonObject resources = results.getJsonObject(0);
 			String fileId = resources.getString("_id");
 			String fileName = resources.getString("title");
+
 			if (fileName == null) {
 				fileName = resources.getString("name");
 			}
+
 			fileName = StringUtils.replaceForbiddenCharacters(fileName);
+
 			if (!usedFileName.add(fileName)) {
 				fileName += "_" + fileId;
 			}
+
 			final String filePath = exportPath + File.separator + fileName;
 			final String padId = resources.getString("epName");
-			vertx.fileSystem().writeFile(filePath, resources.toBuffer(), new Handler<AsyncResult<Void>>() {
+
+			vertx.fileSystem().writeFile(filePath, resources.toBuffer(), new Handler<AsyncResult<Void>>()
+			{
 				@Override
-				public void handle(AsyncResult<Void> event) {
-					if (event.succeeded()) {
-						exportPad(padId, client, exportPath, new Handler<Void>() {
+				public void handle(AsyncResult<Void> event)
+				{
+					if (event.succeeded())
+					{
+						exportPad(padId, client, exportPath, new Handler<Void>()
+						{
 							@Override
-							public void handle(Void v) {
+							public void handle(Void v)
+							{
 								results.remove(0);
 								exportFiles(client, results, exportPath, usedFileName, exported, handler);
 							}
 						});
-					} else {
+					}
+					else
+					{
 						log.error("Collaborative Editor : Could not write file " + filePath, event.cause());
 						handler.handle(exported.get());
 					}
@@ -90,15 +126,23 @@ public class CollaborativeEditorRepositoryEvents implements RepositoryEvents {
 		}
 	}
 
-	private void exportPad(String padId, EPLiteClient client, String exportPath, Handler<Void> handler) {
+	private void exportPad(String padId, EPLiteClient client, String exportPath, Handler<Void> handler)
+	{
 		final String padPath = exportPath + File.separator + "Pad_" + padId;
-		client.getText(padId, new Handler<JsonObject>() {
+
+		client.getText(padId, new Handler<JsonObject>()
+		{
 			@Override
-			public void handle(JsonObject res) {
-				if (res != null && "ok".equals(res.getString("status"))) {
+			public void handle(JsonObject res)
+			{
+				if (res != null && "ok".equals(res.getString("status")))
+				{
 					res.remove("status");
-					vertx.fileSystem().writeFile(padPath, res.toBuffer(), new Handler<AsyncResult<Void>>() {
-						public void handle(AsyncResult<Void> event) {
+
+					vertx.fileSystem().writeFile(padPath, res.toBuffer(), new Handler<AsyncResult<Void>>()
+					{
+						public void handle(AsyncResult<Void> event)
+						{
 							if (event.failed()) {
 								log.error("Collaborative Editor : Could not write pad " + padPath);
 							}
@@ -170,6 +214,150 @@ public class CollaborativeEditorRepositoryEvents implements RepositoryEvents {
 					log.error("Collaborative Editor : Could not proceed query " + query.encode(),
 							event.body().getString("message"));
 					handler.handle(exported.get());
+				}
+			}
+		});
+	}
+
+	@Override
+	protected JsonObject transformDocumentBeforeImport(JsonObject document, String collectionName,
+		String importId, String userId, String userLogin, String userName)
+	{
+		Map<String, JsonObject> padMap = oldPadsToNewPads.get(importId);
+
+		if(padMap != null)
+		{
+			JsonObject newPad = padMap.get(DocumentHelper.getAppProperty(document, "epName"));
+
+			if(newPad != null)
+			{
+				DocumentHelper.setAppProperty(document, "epName", newPad.getString("epName"));
+				DocumentHelper.setAppProperty(document, "epGroupID", newPad.getString("epGroupID"));
+				return document;
+			}
+		}
+
+		// Don't import the pad if we can't find the new pad
+		return null;
+	}
+
+	@Override
+	protected boolean filterMongoDocumentFile(String filePath, Buffer fileContents)
+	{
+		return FileUtils.getFilename(filePath).startsWith("Pad_") == false;
+	}
+
+	@Override
+	public void importResources(String importId, String userId, String userLogin, String userName, String importPath,
+		String locale, String host, boolean forceImportAsDuplication, Handler<JsonObject> handler)
+	{
+		CollaborativeEditorRepositoryEvents self = this;
+		this.fs.readDir(importPath, new Handler<AsyncResult<List<String>>>()
+		{
+			@Override
+			public void handle(AsyncResult<List<String>> result)
+			{
+				if(result.succeeded() == false)
+					handler.handle(new JsonObject().put("status", "error").put("message", "Failed to read import folder"));
+				else
+				{
+					List<String> filesInDir = result.result();
+					int nbFiles = filesInDir.size();
+
+					AtomicInteger unprocessed = new AtomicInteger(nbFiles);
+					AtomicInteger nbErrors = new AtomicInteger(0);
+
+					Map<String, JsonObject> padMap = new ConcurrentHashMap<String, JsonObject>();
+					oldPadsToNewPads.put(importId, padMap);
+
+					Handler finaliseRead = new Handler<Void>()
+					{
+						@Override
+						public void handle(Void res)
+						{
+							CollaborativeEditorRepositoryEvents.super.importResources(importId, userId, userLogin, userName, importPath, locale, host, forceImportAsDuplication,
+								new Handler<JsonObject>()
+							{
+								@Override
+								public void handle(JsonObject rapport)
+								{
+									rapport.put("errorsNumber", Integer.toString(Integer.parseInt(rapport.getString("errorsNumber")) + nbErrors.get()));
+
+									handler.handle(rapport);
+								}
+							});
+						}
+					};
+
+					for(String filePath : filesInDir)
+					{
+						String fileName = FileUtils.getFilename(filePath);
+
+						// Only read pads
+						if(fileName.startsWith("Pad_") == true)
+						{
+							self.fs.readFile(filePath, new Handler<AsyncResult<Buffer>>()
+							{
+								@Override
+								public void handle(AsyncResult<Buffer> fileResult)
+								{
+									if(fileResult.succeeded() == false)
+									{
+										int ix = unprocessed.decrementAndGet();
+
+										nbErrors.addAndGet(1);
+										log.error("Failed to read pad file " + filePath);
+
+										if(ix == 0)
+											finaliseRead.handle(null);
+									}
+									else
+									{
+										String padId = fileName.substring("Pad_".length());
+										String padText = fileResult.result().toJsonObject().getString("text", "");
+
+										// Create a new pad in EtherPad
+										helper.createPad(host, new Handler<JsonObject>()
+										{
+											@Override
+											public void handle(JsonObject padResult)
+											{
+												if(padResult.getString("status").equals("ok") == false)
+												{
+													nbErrors.addAndGet(1);
+
+													int ix = unprocessed.decrementAndGet();
+													if(ix == 0)
+														finaliseRead.handle(null);
+												}
+												else
+												{
+													padMap.put(padId, padResult);
+
+													helper.setPadText(host, padResult.getString("epName"), padText, new Handler<JsonObject>()
+													{
+														@Override
+														public void handle(JsonObject textRes)
+														{
+															int ix = unprocessed.decrementAndGet();
+															if(ix == 0)
+																finaliseRead.handle(null);
+														}
+													});
+												}
+											}
+										});
+									}
+								}
+							});
+						}
+						else
+						{
+							int ix = unprocessed.decrementAndGet();
+							if(ix == 0)
+								finaliseRead.handle(null);
+						}
+					}
 				}
 			}
 		});

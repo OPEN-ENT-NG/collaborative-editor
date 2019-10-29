@@ -121,34 +121,26 @@ public class EtherpadHelper extends MongoDbControllerHelper {
             @Override
             public void handle(final UserInfos user) {
                 if (user != null) {
-                    final String randomName = UUID.randomUUID().toString();
-                    final EPLiteClient client = clientByDomain.get(getAuthDomain(request));
-                    client.createGroup(new Handler<JsonObject>() {
+                    createPad(getAuthDomain(request), new Handler<JsonObject>()
+                    {
                         @Override
-                        public void handle(JsonObject event) {
-                            if ("ok".equals(event.getString("status"))) {
-                                final String groupID = event.getString("groupID");
-                                client.createGroupPad(groupID, randomName, new Handler<JsonObject>() {
+                        public void handle(JsonObject event)
+                        {
+                            if ("ok".equals(event.getString("status")) == false)
+                                Renders.renderError(request, event);
+                            else
+                            {
+                                RequestUtils.bodyToJson(request, new Handler<JsonObject>()
+                                {
                                     @Override
-                                    public void handle(JsonObject event) {
-                                        if ("ok".equals(event.getString("status"))) {
-                                            final String padName = event.getString("padID");
-                                            RequestUtils.bodyToJson(request, new Handler<JsonObject>() {
-                                                @Override
-                                                public void handle(JsonObject object) {
-                                                    object.put("epName", padName);
-                                                    object.put("epGroupID", groupID);
-                                                    object.put("locale", I18n.acceptLanguage(request));
-                                                    etherpadCrudService.create(object, user, notEmptyResponseHandler(request));
-                                                }
-                                            });
-                                        } else {
-                                            Renders.renderError(request, event);
-                                        }
+                                    public void handle(JsonObject object)
+                                    {
+                                        object.put("epName", event.getString("epName"));
+                                        object.put("epGroupID", event.getString("epGroupID"));
+                                        object.put("locale", I18n.acceptLanguage(request));
+                                        etherpadCrudService.create(object, user, notEmptyResponseHandler(request));
                                     }
                                 });
-                            } else {
-                                Renders.renderError(request, event);
                             }
                         }
                     });
@@ -158,6 +150,50 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                 }
             }
         });
+    }
+
+    public void createPad(final String host, final Handler<JsonObject> handler)
+    {
+        final String randomName = UUID.randomUUID().toString();
+        final EPLiteClient client = clientByDomain.get(getAuthDomain(host));
+        client.createGroup(new Handler<JsonObject>()
+        {
+            @Override
+            public void handle(JsonObject event)
+            {
+                if ("ok".equals(event.getString("status")))
+                {
+                    final String groupID = event.getString("groupID");
+                    client.createGroupPad(groupID, randomName, new Handler<JsonObject>()
+                    {
+                        @Override
+                        public void handle(JsonObject event)
+                        {
+                            if ("ok".equals(event.getString("status")))
+                            {
+                                final String padName = event.getString("padID");
+                                handler.handle(
+                                    new JsonObject()
+                                    .put("status", "ok")
+                                    .put("epName", padName)
+                                    .put("epGroupID", groupID)
+                                );
+                            } else {
+                                handler.handle(event);
+                            }
+                        }
+                    });
+                } else {
+                    handler.handle(event);
+                }
+            }
+        });
+    }
+
+    public void setPadText(final String host, final String padId, final String text, final Handler<JsonObject> handler)
+    {
+        final EPLiteClient client = clientByDomain.get(getAuthDomain(host));
+        client.setText(padId, text, handler);
     }
 
     @Override
