@@ -128,7 +128,9 @@ public class EPLiteClient {
         HashMap args = new HashMap();
         args.put("groupID", groupID);
         args.put("padName", padName);
-        args.put("text", text);
+        if (text != null) {
+            args.put("text", text);
+        }
         this.connection.post("createGroupPad", args, handler);
     }
 

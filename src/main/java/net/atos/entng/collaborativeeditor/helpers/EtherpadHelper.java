@@ -21,6 +21,7 @@ package net.atos.entng.collaborativeeditor.helpers;
 
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
+import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.CookieHelper;
 import fr.wseduc.webutils.request.RequestUtils;
@@ -121,7 +122,9 @@ public class EtherpadHelper extends MongoDbControllerHelper {
             @Override
             public void handle(final UserInfos user) {
                 if (user != null) {
-                    createPad(getAuthDomain(request), new Handler<JsonObject>()
+                    final String text = I18n.getInstance().translate("collaborativeeditor.welcome", getHost(request), I18n.acceptLanguage(request));
+
+                    createPad(getAuthDomain(request), text, new Handler<JsonObject>()
                     {
                         @Override
                         public void handle(JsonObject event)
@@ -152,8 +155,11 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         });
     }
 
-    public void createPad(final String host, final Handler<JsonObject> handler)
-    {
+    public void createPad(final String host, final Handler<JsonObject> handler) {
+        createPad(host, null, handler);
+    }
+
+    public void createPad(final String host, final String text, final Handler<JsonObject> handler) {
         final String randomName = UUID.randomUUID().toString();
         final EPLiteClient client = clientByDomain.get(getAuthDomain(host));
         client.createGroup(new Handler<JsonObject>()
@@ -164,7 +170,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                 if ("ok".equals(event.getString("status")))
                 {
                     final String groupID = event.getString("groupID");
-                    client.createGroupPad(groupID, randomName, new Handler<JsonObject>()
+                    client.createGroupPad(groupID, randomName, text, new Handler<JsonObject>()
                     {
                         @Override
                         public void handle(JsonObject event)
@@ -281,6 +287,8 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                             final JsonArray objects = event.right().getValue();
                             final AtomicInteger callCount = new AtomicInteger(objects.size());
 
+                            final String language = Utils.getOrElse(I18n.acceptLanguage(request), "fr", false);
+
                             for (int i=0;i<objects.size();i++) {
                                 final JsonObject jsonObject = objects.getJsonObject(i);
                                 final EPLiteClient client = clientByDomain.get(getAuthDomain(request));
@@ -291,12 +299,12 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                             final String readOnlyId = event.getString("readOnlyID");
 
                                             try {
-                                                final String urlReadOnlyStr = client.getPadUrl() + "/p/" + readOnlyId + "?userName=" + userDisplayName;
+                                                final String urlReadOnlyStr = client.getPadUrl() + "/p/" + readOnlyId + "?userName=" + userDisplayName + "&lang=" + language;
                                                 final URL urlReadOnly = new URL(urlReadOnlyStr);
                                                 final URI uriReadOnly = new URI(urlReadOnly.getProtocol(), urlReadOnly.getUserInfo(), urlReadOnly.getHost(), urlReadOnly.getPort(), urlReadOnly.getPath(), urlReadOnly.getQuery(), urlReadOnly.getRef());
                                                 jsonObject.put("readOnlyUrl", uriReadOnly.toASCIIString());
 
-                                                final String urlStr = client.getPadUrl() + "/p/" + jsonObject.getString("epName") + "?userName=" + userDisplayName;
+                                                final String urlStr = client.getPadUrl() + "/p/" + jsonObject.getString("epName") + "?userName=" + userDisplayName + "&lang=" + language;
                                                 final URL url = new URL(urlStr);
                                                 final URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
                                                 jsonObject.put("url", uri.toASCIIString());

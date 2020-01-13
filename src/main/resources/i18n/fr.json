@@ -31,5 +31,6 @@
     "group.school.Student": "Élèves de l'{0}.",
     "group.school.Teacher": "Enseignants de l'{0}.",
     "group.school.Guest": "Invités de l'{0}.",
-    "collaborativeeditor.push-notif.share.body": "{0} vous a partagé un Pad"
+    "collaborativeeditor.push-notif.share.body": "{0} vous a partagé un Pad",
+    "collaborativeeditor.welcome" : "Bienvenue sur le bloc-notes collaboratif !"
 }
