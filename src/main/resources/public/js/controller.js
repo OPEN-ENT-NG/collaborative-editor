@@ -168,10 +168,10 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
     }
 
     /**
-     * Display date in French format
+     * Display date in appropriate format
      */
     $scope.formatDate = function(dateObject){
-        return moment(dateObject.$date).lang('fr').calendar();
+        return moment(dateObject.$date).calendar();
     };
 
 
