@@ -32,17 +32,22 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
     $scope.exportInProgress = false;
     $scope.action = 'collaborativeeditor-list';
     $scope.notFound = false;
+    $scope.creatingPad = false;
 
     // By default open the collaborative editor list
     template.open('collaborativeeditor', 'collaborativeeditor-list');
     template.open('side-panel', 'collaborativeeditor-side-panel');
 
+    $scope.isEmpty = () => {
+        return $scope.collaborativeeditors && $scope.collaborativeeditors.all && $scope.collaborativeeditors.all.length < 1;
+    }
 
     /**
      * Allows to create a new collaborative editor and open the "collaborativeeditor-edit.html" template into
      * the "main" div.
      */
     $scope.newCollaborativeeditor = function() {
+        $scope.creatingPad = true;
         $scope.collaborativeeditor = new CollaborativeEditor();
         $scope.action = 'collaborativeeditor-create';
         template.open('collaborativeeditor', 'collaborativeeditor-create');
@@ -69,6 +74,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
                  $scope.updateSearchBar();
                  $scope.cancelCollaborativeeditorEdit();
             });
+            $scope.creatingPad = false;
         });
     };
 
@@ -203,6 +209,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         template.close('etherpad');
         $scope.action = 'collaborativeeditor-list';
         template.open('collaborativeeditor', 'collaborativeeditor-list');
+        $scope.creatingPad = false;
     }
 
     /**
@@ -308,7 +315,6 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         delete $scope.collaborativeeditor;
         delete $scope.selectedCollaborativeeditor;
         $scope.display.confirmDeleteCollaborativeeditor = false;
-
     };
 
     /**
@@ -323,6 +329,13 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         event.stopPropagation();
     };
 
+    $scope.workflowReadOnly = () => {
+        return $scope.me 
+            && $scope.me.workflow 
+            && $scope.me.workflow.collaborativeeditor 
+            && ($scope.me.workflow.collaborativeeditor.view || $scope.me.workflow.collaborativeeditor.list)
+            && !$scope.me.workflow.collaborativeeditor.create;
+    }
 
     /**
      * Collaborative editor routes definition

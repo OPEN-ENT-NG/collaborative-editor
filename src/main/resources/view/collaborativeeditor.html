@@ -31,11 +31,9 @@
                                 </h1>
                             </app-title>
                         </div>
-
-
                     </div>
 
-                    <div class="contextual-buttons five cell">
+                    <div class="contextual-buttons five cell" ng-if="!isEmpty()">
                         <button workflow="collaborativeeditor.create" ng-if="!collaborativeeditor" ng-click="newCollaborativeeditor()" class="cell right-magnet">
                             <i18n>collaborativeeditor.new</i18n>
                         </button>
@@ -44,13 +42,41 @@
                 <div class="clear"></div>
             </div>
 
+            <section ng-if="isEmpty() && !creatingPad">
+                <div class="row">
+                    <!-- Empty screen - Consultation -->
+                    <div class="emptyscreen" ng-if="workflowReadOnly()">
+                        <h2 class="emptyscreen-header">
+                            <i18n>empty.collaborativeeditor.consultation.title</i18n>
+                        </h2>
+                        <img class="emptyscreen-image__mini" src="/collaborativeeditor/public/img/empty-collaborativeeditor.svg">
+                        <p class="emptyscreen-footer">
+                            <i18n>empty.collaborativeeditor.consultation</i18n>
+                        </p>
+                    </div>
+                    <!-- Empty screen - Creation -->
+                    <div class="emptyscreen" workflow="collaborativeeditor.create">
+                        <h2 class="emptyscreen-header">
+                            <i18n>empty.collaborativeeditor.creation.title</i18n>
+                        </h2>
+                        <img class="emptyscreen-image__mini" src="/collaborativeeditor/public/img/empty-collaborativeeditor.svg">
+                        <p class="emptyscreen-footer">
+                            <i18n>empty.collaborativeeditor.creation</i18n>
+                        </p>
+                        <button ng-click="newCollaborativeeditor()" class="cell right-magnet">
+                            <i18n>collaborativeeditor.new</i18n>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
 		    <section id="collaborativeeditor-content">
-                    <container template="main" class="flexible content cell"></container>
-                    <container template="collaborativeeditor" class="flexible navigation" ng-class="{ 'empty-neighbour': template.isEmpty('main'), 'filled-neighbour': !template.isEmpty('main') }"></container>
-		     </section>
+                <container template="main" class="flexible content cell"></container>
+                <container template="collaborativeeditor" class="flexible navigation" ng-class="{ 'empty-neighbour': template.isEmpty('main'), 'filled-neighbour': !template.isEmpty('main') }"></container>
+            </section>
         </portal>
 
-        <section>
+        <section ng-if="!isEmpty()">
             <container template="etherpad" class="flexible navigation" ng-class="{ 'empty-neighbour': template.isEmpty('main'), 'filled-neighbour': !template.isEmpty('main') }"></container>
         </section>
 
