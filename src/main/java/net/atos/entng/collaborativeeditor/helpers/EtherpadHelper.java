@@ -202,6 +202,18 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         client.setText(padId, text, handler);
     }
 
+    public void setPadHTML(final String host, final String padId, final String html, final Handler<JsonObject> handler)
+    {
+        final EPLiteClient client = clientByDomain.get(getAuthDomain(host));
+        client.setHTML(padId, html, handler);
+    }
+
+    public void getPadHTML(final String host, final String padId, final Handler<JsonObject> handler)
+    {
+        final EPLiteClient client = clientByDomain.get(getAuthDomain(host));
+        client.getHTML(padId, handler);
+    }
+
     @Override
     public void retrieve(final HttpServerRequest request) {
         UserUtils.getUserInfos(eb, request, new Handler<UserInfos>() {

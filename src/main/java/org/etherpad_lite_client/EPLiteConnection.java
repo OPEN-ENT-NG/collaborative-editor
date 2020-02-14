@@ -113,18 +113,30 @@ public class EPLiteConnection {
      * POSTs to the HTTP JSON API.
      */
     public void post(String apiMethod, final Handler<JsonObject> handler) {
-        this.post(apiMethod, new HashMap(), handler);
+        this.post(apiMethod, new HashMap(), new HashMap(), handler);
     }
 
     /**
      * POSTs to the HTTP JSON API.
      */
-    public void post(String apiMethod, HashMap apiArgs,  final Handler<JsonObject> handler) {
+    public void post(String apiMethod, HashMap getArgs, final Handler<JsonObject> handler) {
+        this.post(apiMethod, getArgs, new HashMap(), handler);
+    }
+
+    /**
+     * POSTs to the HTTP JSON API.
+     */
+    public void post(String apiMethod, HashMap getArgs, HashMap postArgs, final Handler<JsonObject> handler) {
         String path = this.apiPath(apiMethod);
-        String query = this.queryString(apiArgs);
+        String query = this.queryString(getArgs);
         URL url = apiUrl(path, query);
 
-        this.callPost(url, handler);
+        System.out.println();
+        System.out.println("URL:");
+        System.out.println(url);
+        System.out.println();
+
+        this.callPost(url, postArgs, handler);
     }
 
     /**
@@ -132,14 +144,16 @@ public class EPLiteConnection {
      * FIXME Post call doesn't work due to unauthorized error (I have simulate query with another client and the result is the same)
      * FIXME Perhaps etherpad-lite API don't support POST http verb
      */
-    private void callPost(final URL url, final Handler<JsonObject> handler) {
-        HttpClientRequest req = httpClient.get(url.toString(), new Handler<HttpClientResponse>() {
+    private void callPost(final URL url, HashMap postArgs, final Handler<JsonObject> handler) {
+        HttpClientRequest req = httpClient.post(url.toString(), new Handler<HttpClientResponse>() {
             @Override
             public void handle(final HttpClientResponse response) {
                 parseData(response, handler);
             }
         });
-        req.end();
+        JsonObject body = new JsonObject(postArgs);
+        req.putHeader("Content-Type", "application/json; charset=utf-8");
+        req.end(body.toString());
     }
 
     /**

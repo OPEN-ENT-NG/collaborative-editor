@@ -23,6 +23,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
+import java.net.URLEncoder;
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -80,7 +82,7 @@ public class EPLiteClient {
      * Creates a new Group. The group id is returned in "groupID" in the HashMap.
      */
     public void createGroup(final Handler<JsonObject> handler) {
-        this.connection.post("createGroup", handler);
+        this.connection.get("createGroup", handler);
     }
 
     /**
@@ -118,7 +120,7 @@ public class EPLiteClient {
         HashMap args = new HashMap();
         args.put("groupID", groupID);
         args.put("padName", padName);
-        this.connection.post("createGroupPad", args, handler);
+        this.connection.get("createGroupPad", args, handler);
     }
 
     /**
@@ -131,7 +133,7 @@ public class EPLiteClient {
         if (text != null) {
             args.put("text", text);
         }
-        this.connection.post("createGroupPad", args, handler);
+        this.connection.get("createGroupPad", args, handler);
     }
 
     /**
@@ -311,8 +313,9 @@ public class EPLiteClient {
     public void setText(String padId, String text, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        args.put("text", text);
-        this.connection.post("setText", args, handler);
+        HashMap postArgs = new HashMap();
+        postArgs.put("text", text);
+        this.connection.post("setText", args, postArgs, handler);
     }
 
     /**
@@ -340,8 +343,9 @@ public class EPLiteClient {
     public void setHTML(String padId, String html, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        args.put("html", html);
-        this.connection.post("setHTML", args, handler);
+        HashMap postArgs = new HashMap();
+        postArgs.put("html", html);
+        this.connection.post("setHTML", args, postArgs, handler);
     }
 
     // Pads
@@ -364,8 +368,9 @@ public class EPLiteClient {
     public void createPad(String padId, String text, final Handler<JsonObject> handler) {
         HashMap args = new HashMap();
         args.put("padID", padId);
-        args.put("text", text);
-        this.connection.post("createPad", args, handler);
+        HashMap postArgs = new HashMap();
+        postArgs.put("text", text);
+        this.connection.post("createPad", args, postArgs, handler);
     }
 
     /**

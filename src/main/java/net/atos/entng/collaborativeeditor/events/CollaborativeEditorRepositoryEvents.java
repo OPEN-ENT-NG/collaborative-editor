@@ -130,7 +130,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 	{
 		final String padPath = exportPath + File.separator + "Pad_" + padId;
 
-		client.getText(padId, new Handler<JsonObject>()
+		client.getHTML(padId, new Handler<JsonObject>()
 		{
 			@Override
 			public void handle(JsonObject res)
@@ -314,7 +314,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 									else
 									{
 										String padId = fileName.substring("Pad_".length());
-										String padText = fileResult.result().toJsonObject().getString("text", "");
+										String padText = fileResult.result().toJsonObject().getString("html", "");
 
 										// Create a new pad in EtherPad
 										helper.createPad(host, new Handler<JsonObject>()
@@ -333,8 +333,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 												else
 												{
 													padMap.put(padId, padResult);
-
-													helper.setPadText(host, padResult.getString("epName"), padText, new Handler<JsonObject>()
+													helper.setPadHTML(host, padResult.getString("epName"), padText, new Handler<JsonObject>()
 													{
 														@Override
 														public void handle(JsonObject textRes)
