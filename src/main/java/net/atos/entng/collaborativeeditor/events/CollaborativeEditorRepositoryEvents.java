@@ -270,7 +270,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 					Map<String, JsonObject> padMap = new ConcurrentHashMap<String, JsonObject>();
 					oldPadsToNewPads.put(importId, padMap);
 
-					Handler finaliseRead = new Handler<Void>()
+					Handler<Void> finaliseRead = new Handler<Void>()
 					{
 						@Override
 						public void handle(Void res)
@@ -314,7 +314,8 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 									else
 									{
 										String padId = fileName.substring("Pad_".length());
-										String padText = fileResult.result().toJsonObject().getString("html", "");
+										String padHtml = fileResult.result().toJsonObject().getString("html", "");
+										String padText = fileResult.result().toJsonObject().getString("text", null);
 
 										// Create a new pad in EtherPad
 										helper.createPad(host, new Handler<JsonObject>()
@@ -333,7 +334,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 												else
 												{
 													padMap.put(padId, padResult);
-													helper.setPadHTML(host, padResult.getString("epName"), padText, new Handler<JsonObject>()
+													Handler<JsonObject> hnd = new Handler<JsonObject>()
 													{
 														@Override
 														public void handle(JsonObject textRes)
@@ -342,7 +343,12 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 															if(ix == 0)
 																finaliseRead.handle(null);
 														}
-													});
+													};
+
+													if(padText != null && padHtml.isEmpty() == true)
+														helper.setPadText(host, padResult.getString("epName"), padText, hnd);
+													else
+														helper.setPadHTML(host, padResult.getString("epName"), padHtml, hnd);
 												}
 											}
 										});
