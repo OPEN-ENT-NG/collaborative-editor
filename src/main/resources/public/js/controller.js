@@ -38,7 +38,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
     template.open('collaborativeeditor', 'collaborativeeditor-list');
     template.open('side-panel', 'collaborativeeditor-side-panel');
 
-    $scope.isEmpty = () => {
+    $scope.isEmpty = function() {
         return $scope.collaborativeeditors && $scope.collaborativeeditors.all && $scope.collaborativeeditors.all.length < 1;
     }
 
@@ -329,7 +329,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         event.stopPropagation();
     };
 
-    $scope.workflowReadOnly = () => {
+    $scope.workflowReadOnly = function() {
         return $scope.me 
             && $scope.me.workflow 
             && $scope.me.workflow.collaborativeeditor 
