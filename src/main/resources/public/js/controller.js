@@ -112,7 +112,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
      */
     $scope.getCollaborativeeditorThumbnail = function(collaborativeeditor){
         if(!collaborativeeditor.thumbnail || collaborativeeditor.thumbnail === ''){
-            return '/img/illustrations/image-default.svg';
+            return '/img/illustrations/collaborative-editor.svg';
         }
         return collaborativeeditor.thumbnail + '?thumbnail=120x120';
     };
