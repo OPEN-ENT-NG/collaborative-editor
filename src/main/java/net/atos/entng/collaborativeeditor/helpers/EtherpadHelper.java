@@ -162,6 +162,11 @@ public class EtherpadHelper extends MongoDbControllerHelper {
     public void createPad(final String host, final String text, final Handler<JsonObject> handler) {
         final String randomName = UUID.randomUUID().toString();
         final EPLiteClient client = clientByDomain.get(getAuthDomain(host));
+        if(client == null)
+        {
+            handler.handle(new JsonObject().put("status", "error").put("message", "no.pad.client"));
+            return;
+        }
         client.createGroup(new Handler<JsonObject>()
         {
             @Override
