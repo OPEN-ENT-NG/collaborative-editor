@@ -25,6 +25,10 @@ import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.CookieHelper;
 import fr.wseduc.webutils.request.RequestUtils;
+import net.atos.entng.collaborativeeditor.CollaborativeEditor;
+import org.entcore.common.events.EventHelper;
+import org.entcore.common.events.EventStore;
+import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.mongodb.MongoDbControllerHelper;
 import org.entcore.common.service.CrudService;
 import org.entcore.common.service.VisibilityFilter;
@@ -51,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.entcore.common.http.response.DefaultResponseHandler.notEmptyResponseHandler;
 
 public class EtherpadHelper extends MongoDbControllerHelper {
-
+    static final String RESOURCE_NAME = "pad";
     /**
      * Class logger
      */
@@ -67,6 +71,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
      * Mongo CRUD service
      */
     private final CrudService etherpadCrudService;
+    private final EventHelper eventHelper;
 
     /**
      * Constructor
@@ -80,6 +85,8 @@ public class EtherpadHelper extends MongoDbControllerHelper {
      */
     public EtherpadHelper(Vertx vertx, String collection, JsonArray urlByDomain, String etherpadUrl, String etherpadApiKey, Boolean trustAll, String domain) {
         super(collection);
+        final EventStore eventStore = EventStoreFactory.getFactory().getEventStore(CollaborativeEditor.class.getSimpleName());
+        this.eventHelper = new EventHelper(eventStore);
         this.etherpadCrudService = new MongoDbCrudService(collection);
 
         if (StringUtils.isEmpty(etherpadApiKey)) {
@@ -141,7 +148,8 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                         object.put("epName", event.getString("epName"));
                                         object.put("epGroupID", event.getString("epGroupID"));
                                         object.put("locale", I18n.acceptLanguage(request));
-                                        etherpadCrudService.create(object, user, notEmptyResponseHandler(request));
+                                        final Handler<Either<String,JsonObject>> handler = notEmptyResponseHandler(request);
+                                        etherpadCrudService.create(object, user, eventHelper.onCreateResource(request, RESOURCE_NAME, handler));
                                     }
                                 });
                             }

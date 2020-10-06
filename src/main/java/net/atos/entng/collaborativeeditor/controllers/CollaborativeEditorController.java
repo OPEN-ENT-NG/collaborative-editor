@@ -26,6 +26,7 @@ import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.request.RequestUtils;
 import net.atos.entng.collaborativeeditor.CollaborativeEditor;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
+import org.entcore.common.events.EventHelper;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.mongodb.MongoDbControllerHelper;
@@ -47,18 +48,12 @@ import java.util.Map;
 public class CollaborativeEditorController extends MongoDbControllerHelper {
 
     private final EtherpadHelper etherpadHelper;
+    private final EventHelper eventHelper;
 
-    private EventStore eventStore;
-
-    private enum CollaborativeEditorEvent {
-        ACCESS
-    }
 
     @Override
     public void init(Vertx vertx, JsonObject config, RouteMatcher rm, Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
         super.init(vertx, config, rm, securedActions);
-        eventStore = EventStoreFactory.getFactory().getEventStore(CollaborativeEditor.class.getSimpleName());
-
     }
 
     /**
@@ -69,6 +64,8 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
     public CollaborativeEditorController(Vertx vertx, String collection, EtherpadHelper etherpadHelper) {
         super(collection);
         this.etherpadHelper = etherpadHelper;
+        final EventStore eventStore = EventStoreFactory.getFactory().getEventStore(CollaborativeEditor.class.getSimpleName());
+        this.eventHelper = new EventHelper(eventStore);
     }
 
     @Get("")
@@ -77,7 +74,7 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
         renderView(request);
 
         // Create event "access to application Collaborative Editor" and store it, for module "statistics"
-        eventStore.createAndStoreEvent(CollaborativeEditorEvent.ACCESS.name(), request);
+        eventHelper.onAccess(request);
     }
 
     @Override
