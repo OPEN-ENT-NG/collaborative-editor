@@ -20,9 +20,9 @@
                 <div class="bottom">
                     <div class="content">
                         <div class="cell" ng-click="redirect('/view/' + c._id)">
-                            <strong>[[c.name]]</strong>
-                            <br />[[c.owner.displayName]]
-                            <br />[[formatDate(c.modified)]]
+                            <strong class="ressource-name" tooltip="[[c.name]]">[[c.name]]</strong>
+                            <span class="owner">[[c.owner.displayName]]</span>
+                            <span class="date">[[formatDate(c.modified)]]</span>
                         </div>
                         <div ng-show="canManageCollaborativeeditor(c)" class="bottom-locked eleven vertical-spacing-twice">
                             <input type="checkbox" data-ng-model="c.selected" class="right-magnet cell" />
