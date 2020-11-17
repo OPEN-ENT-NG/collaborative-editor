@@ -10,6 +10,7 @@
     "collaborativeeditor.delete.confirm": "Voulez-vous vraiment supprimer le(s) Pad sélectionné(s) ?",
     "collaborativeeditor.or.page.notfound.or.unauthorized": "Le Pad ou la page demandé n'existe pas, a été supprimé, ou vous n'avez pas les droits pour y accéder.",
     "group.HeadTeacher": "Professeurs principaux de {0}.",
+    "group.Direction": "Directeurs de {0}.",
     "group.Func": "Personnels de fonction {0}.",
     "group.Discipline": "Enseignants de discipline {0}.",
     "group.AdminLocal": "Administrateurs locaux de {0}.",
