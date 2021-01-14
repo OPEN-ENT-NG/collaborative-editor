@@ -5,11 +5,18 @@ then
   mkdir node_modules
 fi
 
-if [ -z ${USER_UID:+x} ]
-then
-  export USER_UID=1000
-  export GROUP_GID=1000
-fi
+case `uname -s` in
+   MINGW*)
+     USER_UID=1000
+     GROUP_UID=1000
+     ;;
+   *)
+   if [ -z ${USER_UID:+x} ]
+     then
+       USER_UID=`id -u`
+       GROUP_GID=`id -g`
+   fi
+esac
 
 clean () {
   docker-compose run --rm -u "$USER_UID:$GROUP_GID" gradle gradle clean
