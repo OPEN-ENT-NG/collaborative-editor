@@ -1,18 +1,10 @@
+import {_, angular, Controller, moment, ng, template} from "entcore";
+import { collaborativeEditor } from "../models/model";
+
 console.log("Start loading controller pad");
 
-
-/**
- * Collaborative Editor routes declaration
- */
-routes.define(function($routeProvider){
-    $routeProvider
-        .when('/view/:collaborativeeditorId', {
-            action: 'viewCollaborativeeditor'
-        })
-        .otherwise({
-            action: 'listCollaborativeeditor'
-        });
-});
+declare let window: any;
+declare let model: any;
 
 /**
  * Controller for collaborative editors. All methods contained in this controller can be called
@@ -21,7 +13,8 @@ routes.define(function($routeProvider){
  * @param template all templates.
  * @param model the collaborative editor model.
  */
-function CollaborativeEditorController($scope, template, model, route, $timeout, $sce, $location) {
+export const CollaborativeEditorController: Controller = ng.controller('CollaborativeEditorController',
+    ['$scope', 'route', '$timeout', '$sce', '$location', function ($scope, route, $timeout, $sce, $location) {
     $scope.template = template;
     $scope.collaborativeeditors = model.collaborativeEditors;
     $scope.me = model.me;
@@ -48,7 +41,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
      */
     $scope.newCollaborativeeditor = function() {
         $scope.creatingPad = true;
-        $scope.collaborativeeditor = new CollaborativeEditor();
+        $scope.collaborativeeditor = new collaborativeEditor.CollaborativeEditor();
         $scope.action = 'collaborativeeditor-create';
         template.open('collaborativeeditor', 'collaborativeeditor-create');
         template.close('etherpad');
@@ -309,6 +302,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         _.map($scope.collaborativeeditors.selection(), function(collaborativeeditor){
             collaborativeeditor.delete(function() {
                 $scope.updateSearchBar();
+                $scope.$apply();
             });
         });
 
@@ -330,9 +324,9 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
     };
 
     $scope.workflowReadOnly = function() {
-        return $scope.me 
-            && $scope.me.workflow 
-            && $scope.me.workflow.collaborativeeditor 
+        return $scope.me
+            && $scope.me.workflow
+            && $scope.me.workflow.collaborativeeditor
             && ($scope.me.workflow.collaborativeeditor.view || $scope.me.workflow.collaborativeeditor.list)
             && !$scope.me.workflow.collaborativeeditor.create;
     }
@@ -345,7 +339,7 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         /**
          * Retrieve a collaborative editor from its database id and open it
          */
-        viewCollaborativeeditor: function(params){
+        viewCollaborativeeditor: function(params) {
             model.collaborativeEditors.sync(function() {
                 var c = _.find(model.collaborativeEditors.all, function(collaborativeeditor){
                     return collaborativeeditor._id === params.collaborativeeditorId;
@@ -358,7 +352,6 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
                     $scope.openMainPage();
                 }
             });
-
         },
 
         /**
@@ -369,5 +362,6 @@ function CollaborativeEditorController($scope, template, model, route, $timeout,
         }
     });
 
-}
+}]);
+
 console.log("End loading controller pad");

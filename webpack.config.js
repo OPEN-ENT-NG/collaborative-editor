@@ -20,7 +20,7 @@ module.exports = {
     },
     resolve: {
         modulesDirectories: ['node_modules'],
-        extensions: ['', '.ts', '.js']
+        extensions: ['', '.ts', '.js', '.json']
     },
     devtool: "source-map",
     module: {

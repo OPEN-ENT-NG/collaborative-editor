@@ -10,7 +10,7 @@
     "types": [
       "jquery",
       "core-js"
-    ],
+    ]
   },
   "exclude": [
     "build", "node_modules"
