@@ -1,3 +1,5 @@
+import {_, Behaviours, http, model} from 'entcore';
+
 console.log("Start loading behaviours pad");
 var collaborativeeditorBehaviours = {
     /**
@@ -91,7 +93,7 @@ Behaviours.register('collaborativeeditor', {
                     ownerName : collaborativeeditor.owner.displayName,
                     owner : collaborativeeditor.owner.userId,
                     icon : '/collaborativeeditor/public/img/mindmap.png',
-                    path : '/collaborativeeditor#/view/' + mindmap._id,
+                    path : '/collaborativeeditor#/view/' + collaborativeeditor._id,
                     id : collaborativeeditor._id
                 };
             })
