@@ -1,7 +1,13 @@
 /**
  * Model to create a collaborative editor.
  */
-function CollaborativeEditor() {}
+import {http} from "entcore";
+
+declare let model: any;
+
+export let collaborativeEditor: any = {};
+
+collaborativeEditor.CollaborativeEditor = function() {}
 
 
 /**
@@ -9,7 +15,7 @@ function CollaborativeEditor() {}
  * this method calls the create method otherwise it calls the update method.
  * @param callback a function to call after saving.
  */
-CollaborativeEditor.prototype.save = function(callback) {
+collaborativeEditor.CollaborativeEditor.prototype.save = function(callback) {
 	if (this._id) {
 		this.update(callback);
 	} else {
@@ -23,7 +29,7 @@ CollaborativeEditor.prototype.save = function(callback) {
  * persist data.
  * @param callback a function to call after create.
  */
-CollaborativeEditor.prototype.create = function(callback) {
+collaborativeEditor.CollaborativeEditor.prototype.create = function(callback) {
     http().postJson('/collaborativeeditor', this).done(function() {
         if(typeof callback === 'function'){
             callback();
@@ -36,7 +42,7 @@ CollaborativeEditor.prototype.create = function(callback) {
  * data.
  * @param callback a function to call after create.
  */
-CollaborativeEditor.prototype.update = function(callback) {
+collaborativeEditor.CollaborativeEditor.prototype.update = function(callback) {
     http().putJson('/collaborativeeditor/' + this._id, this).done(function() {
         if(typeof callback === 'function'){
             callback();
@@ -49,7 +55,7 @@ CollaborativeEditor.prototype.update = function(callback) {
  * data.
  * @param callback a function to call after delete.
  */
-CollaborativeEditor.prototype.delete = function(callback) {
+collaborativeEditor.CollaborativeEditor.prototype.delete = function(callback) {
     http().delete('/collaborativeeditor/' + this._id).done(function() {
         model.collaborativeEditors.remove(this);
         if(typeof callback === 'function'){
@@ -62,7 +68,7 @@ CollaborativeEditor.prototype.delete = function(callback) {
  * Gets a session on the pad
  * @param callback a function to call after delete.
  */
-CollaborativeEditor.prototype.session = function(callback) {
+collaborativeEditor.CollaborativeEditor.prototype.session = function(callback) {
     http().get('/collaborativeeditor/session/' + this._id).done(function() {
         if(typeof callback === 'function'){
             callback();
@@ -75,7 +81,7 @@ CollaborativeEditor.prototype.session = function(callback) {
  * Removes a session on the pad
  * @param callback a function to call after delete.
  */
-CollaborativeEditor.prototype.deleteSession = function(callback) {
+collaborativeEditor.CollaborativeEditor.prototype.deleteSession = function(callback) {
     http().get('/collaborativeeditor/deleteSession/' + this._id).done(function() {
         if(typeof callback === 'function'){
             callback();
@@ -86,7 +92,7 @@ CollaborativeEditor.prototype.deleteSession = function(callback) {
  * Allows to convert the current collaborative editor into a JSON format.
  * @return the current collaborative editor in JSON format.
  */
-CollaborativeEditor.prototype.toJSON = function() {
+collaborativeEditor.CollaborativeEditor.prototype.toJSON = function() {
     return {
         name: this.name,
         description: this.description,
@@ -100,10 +106,10 @@ CollaborativeEditor.prototype.toJSON = function() {
  * Allows to create a model and load the list of collaborative editors from the backend.
  */
 model.build = function() {
+    this.makeModels(collaborativeEditor);
 
-    this.makeModel(CollaborativeEditor);
-    
-    this.collection(CollaborativeEditor, {
+    this.collection(collaborativeEditor.CollaborativeEditor, {
+
         sync: function(callback){
             http().get('/collaborativeeditor/list/all').done(function(collaborativeeditors){
                 this.load(collaborativeeditors);
@@ -112,6 +118,7 @@ model.build = function() {
                 }
             }.bind(this));
         },
+
         behaviours: 'collaborativeeditor'
     });
 };
