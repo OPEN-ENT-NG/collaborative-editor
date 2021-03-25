@@ -358,7 +358,9 @@ export const CollaborativeEditorController: Controller = ng.controller('Collabor
          * Display the collaborative editors list
          **/
         listCollaborativeeditor: function(params){
-            $scope.openMainPage();
+            model.collaborativeEditors.sync(function () {
+                $scope.openMainPage();
+            });
         }
     });
 
