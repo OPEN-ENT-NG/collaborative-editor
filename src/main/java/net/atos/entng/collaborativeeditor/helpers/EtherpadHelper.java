@@ -83,7 +83,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
      * @param trustAll trust all
      * @param domain domain
      */
-    public EtherpadHelper(Vertx vertx, String collection, JsonArray urlByDomain, String etherpadUrl, String etherpadApiKey, Boolean trustAll, String domain) {
+    public EtherpadHelper(Vertx vertx, String collection, JsonArray urlByDomain, String etherpadUrl, String etherpadApiKey, Boolean trustAll, String domain, final JsonObject config) {
         super(collection);
         final EventStore eventStore = EventStoreFactory.getFactory().getEventStore(CollaborativeEditor.class.getSimpleName());
         this.eventHelper = new EventHelper(eventStore);
@@ -108,7 +108,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                     log.error("[Collaborative Editor] Error : Module property 'etherpad-url' must be defined for " + padDomain);
                 }
 
-                clientByDomain.put(padDomain,  new EPLiteClient(vertx, padUrl, etherpadApiKey, trustAll));
+                clientByDomain.put(padDomain,  new EPLiteClient(vertx, padUrl, etherpadApiKey, trustAll, config));
             }
         } else {
             if (StringUtils.isEmpty(etherpadUrl)) {
@@ -119,7 +119,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                 log.error("[Collaborative Editor] Error : Module property 'etherpad-domain' must be defined");
             }
 
-            clientByDomain.put(domain,  new EPLiteClient(vertx, etherpadUrl, etherpadApiKey, trustAll));
+            clientByDomain.put(domain,  new EPLiteClient(vertx, etherpadUrl, etherpadApiKey, trustAll, config));
         }
     }
 

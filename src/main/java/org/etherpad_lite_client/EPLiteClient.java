@@ -53,24 +53,24 @@ public class EPLiteClient {
      * Initializes a new org.etherpad_lite_client.EPLiteClient object. The default Etherpad Lite API version (in
      * DEFAULT_API_VERSION) will be used.
      */
-    public EPLiteClient(Vertx vertx, String url, String apiKey) {
-        this(vertx, url, apiKey, DEFAULT_API_VERSION, DEFAULT_TRUST_ALL_CERTIFICATE);
+    public EPLiteClient(Vertx vertx, String url, String apiKey, final JsonObject config) {
+        this(vertx, url, apiKey, DEFAULT_API_VERSION, DEFAULT_TRUST_ALL_CERTIFICATE, config);
     }
 
     /**
      * Initializes a new org.etherpad_lite_client.EPLiteClient object. The specified Etherpad Lite trust SSL will be
      * used.
      */
-    public EPLiteClient(Vertx vertx, String url, String apiKey, Boolean trustAll) {
-        this(vertx, url, apiKey, DEFAULT_API_VERSION, trustAll);
+    public EPLiteClient(Vertx vertx, String url, String apiKey, Boolean trustAll, final JsonObject config) {
+        this(vertx, url, apiKey, DEFAULT_API_VERSION, trustAll, config);
     }
 
     /**
      * Initializes a new org.etherpad_lite_client.EPLiteClient object. The specified Etherpad Lite API version will be
      * used.
      */
-    public EPLiteClient(Vertx vertx, String url, String apiKey, String apiVersion, Boolean trustAll) {
-        this.connection = new EPLiteConnection(vertx, url, apiKey, apiVersion, trustAll);
+    public EPLiteClient(Vertx vertx, String url, String apiKey, String apiVersion, Boolean trustAll, final JsonObject config) {
+        this.connection = new EPLiteConnection(vertx, url, apiKey, apiVersion, trustAll, config);
         this.padUrl = url;
     }
 

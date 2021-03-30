@@ -57,7 +57,7 @@ public class CollaborativeEditor extends BaseServer {
         setDefaultResourceFilter(new ShareAndOwner());
 
         final EtherpadHelper etherpadHelper = new EtherpadHelper(vertx, COLLABORATIVEEDITOR_COLLECTION, config.getJsonArray("domains"), config.getString("etherpad-url", null),
-                config.getString("etherpad-api-key", null), config.getBoolean("trust-all-certificate", true), config.getString("etherpad-domain", null));
+                config.getString("etherpad-api-key", null), config.getBoolean("trust-all-certificate", true), config.getString("etherpad-domain", null), config);
 
         addController(new CollaborativeEditorController(vertx, COLLABORATIVEEDITOR_COLLECTION, etherpadHelper));
         // Subscribe to events published for searching

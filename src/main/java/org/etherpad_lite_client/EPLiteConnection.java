@@ -26,9 +26,11 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.entcore.common.utils.StringUtils;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -37,6 +39,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Connection object for talking to and parsing responses from the Etherpad Lite Server.
@@ -52,17 +55,17 @@ public class EPLiteConnection {
     /**
      * The url of the API
      */
-    public URI uri;
+    public final URI uri;
 
     /**
      * The API key
      */
-    public String apiKey;
+    public final String apiKey;
 
     /**
      * The Etherpad Lite API version
      */
-    public String apiVersion;
+    public final String apiVersion;
 
     private final HttpClient httpClient;
 
@@ -73,18 +76,30 @@ public class EPLiteConnection {
      * @param apiKey the API Key
      * @param apiVersion the API version
      */
-    public EPLiteConnection(Vertx vertx, String url, String apiKey, String apiVersion, Boolean trustAll) {
-        this.uri = URI.create(url);
+    public EPLiteConnection(Vertx vertx, final String url, String apiKey, String apiVersion, Boolean trustAll, JsonObject config) {
+        final Optional<String> internalUrlOpt = Optional.ofNullable(config.getString("internal-uri"));
+        final JsonArray domains = config.getJsonArray("domains", new JsonArray());
+        final Optional<String> foundDomain = domains.stream().filter(e -> e instanceof JsonObject).map(e -> (JsonObject)e).filter(e -> {
+            return url.equals(e.getString("etherpad-url")) && e.containsKey("internal-uri");
+        }).map(e -> e.getString("internal-uri")).findFirst();
+        final String internalUrl = foundDomain.orElse(internalUrlOpt.orElse(""));
+        if(!StringUtils.isEmpty(internalUrl)){
+            log.info("Use internal pad uri: "+ internalUrl);
+            this.uri = URI.create(internalUrl);
+        }else{
+            this.uri = URI.create(url);
+        }
+        log.info("Pad pool zie : "+config.getInteger("max-pool-size", 16));
         this.apiKey = apiKey;
         this.apiVersion = apiVersion;
         final int port = (uri.getPort() > 0) ? uri.getPort() : ("https".equals(uri.getScheme()) ? 443 : 80);
         final HttpClientOptions options = new HttpClientOptions()
             .setDefaultHost(uri.getHost())
             .setDefaultPort(port)
-            .setMaxPoolSize(16)
-            .setConnectTimeout(10000)
-            .setVerifyHost(false)
-            .setKeepAlive(false)
+            .setMaxPoolSize(config.getInteger("max-pool-size", 16))
+            .setConnectTimeout(config.getInteger("connect-timeout", 10000))
+            .setVerifyHost(config.getBoolean("verify-host", false))
+            .setKeepAlive(config.getBoolean("keep-alive", false))
             .setSsl("https".equals(uri.getScheme()))
             // fixme Warning jvm knows no AC, trusted parameter used, but MITM attacks are feasible
             .setTrustAll(trustAll);
@@ -130,11 +145,6 @@ public class EPLiteConnection {
         String path = this.apiPath(apiMethod);
         String query = this.queryString(getArgs);
         URL url = apiUrl(path, query);
-
-        System.out.println();
-        System.out.println("URL:");
-        System.out.println(url);
-        System.out.println();
 
         this.callPost(url, postArgs, handler);
     }
