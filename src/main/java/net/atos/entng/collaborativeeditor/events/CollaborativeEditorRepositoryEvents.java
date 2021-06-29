@@ -158,8 +158,8 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 	}
 
 	@Override
-	public void exportResources(JsonArray resourcesIds, String exportId, String userId, JsonArray g, String exportPath, String locale,
-			String host, Handler<Boolean> handler)
+	public void exportResources(JsonArray resourcesIds, boolean exportDocuments, boolean exportSharedResources, String exportId, String userId,
+			JsonArray g, String exportPath, String locale, String host, Handler<Boolean> handler)
 	{
 		QueryBuilder findByAuthor = QueryBuilder.start("owner.userId").is(userId);
 
@@ -168,7 +168,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 			QueryBuilder.start("shared.groupId").in(g).get()
 		);
 
-		QueryBuilder findByAuthorOrShared = QueryBuilder.start().or(findByAuthor.get(), findByShared.get());
+		QueryBuilder findByAuthorOrShared = exportSharedResources == false ? findByAuthor : QueryBuilder.start().or(findByAuthor.get(), findByShared.get());
 
 		JsonObject query;
 
