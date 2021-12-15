@@ -1,0 +1,37 @@
+{
+    "name": "{{ collaborativeEditorVersion }}",
+    "config": {
+        "main": "net.atos.entng.collaborativeeditor.CollaborativeEditor",
+        "port": 8668,
+        "max-pool-size": {{ etherPadPoolSize|default('100') }},
+        {% if etherPadInnerUri is defined %}"internal-uri": "{{etherPadInnerUri}}",{% endif %}
+        {% if csrfToken %}"csrf-token": true,{% endif %}
+        "app-name": "Collaborative Editor",
+        "app-address": "/collaborativeeditor",
+        "app-icon": "pad-large",
+        "app-type" : "END_USER",
+        "host": "https://{{ host }}",
+        "ssl": true,
+        {% if overrideTheme %} "override-theme": {}, {% endif %}
+        "userbook-host": "https://{{ host }}",
+        "integration-mode": "HTTP",
+        "app-registry.port": 8012,
+        "mode": "prod",
+        "domains": {{ domains }},
+        "etherpad-api-key": "{{ etherpadKey }}",
+        "entcore.port": 8009,
+        {% if unusedPadCron is defined and unusedPadCron %}
+        "unusedPadCron": "0 0 23 * * ? 2042",
+        {% endif %}
+        "publicConf": {
+            "xiti": {
+                "ID_SERVICE": {
+                    "default": 2
+                },
+                "LIBELLE_SERVICE": {
+                    "default": "PRODUCTION_COLLABORATIVE"
+                }
+            }
+        }
+    }
+}
