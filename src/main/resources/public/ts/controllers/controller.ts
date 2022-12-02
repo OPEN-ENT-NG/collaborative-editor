@@ -27,6 +27,8 @@ export const CollaborativeEditorController: Controller = ng.controller('Collabor
     $scope.notFound = false;
     $scope.creatingPad = false;
 
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
     // By default open the collaborative editor list
     template.open('collaborativeeditor', 'collaborativeeditor-list');
     template.open('side-panel', 'collaborativeeditor-side-panel');
@@ -113,9 +115,9 @@ export const CollaborativeEditorController: Controller = ng.controller('Collabor
     /**
      * Open a collaborative editor
      */
-    $scope.openCollaborativeeditor = function(collaborativeeditor) {
+    $scope.openCollaborativeeditor = async function(collaborativeeditor) {
         if ($scope.selectedCollaborativeeditor) {
-            $scope.selectedCollaborativeeditor.deleteSession();
+            await $scope.selectedCollaborativeeditor.deleteSession();
         }
         delete $scope.collaborativeeditor;
         delete $scope.selectedCollaborativeeditor;
@@ -135,7 +137,10 @@ export const CollaborativeEditorController: Controller = ng.controller('Collabor
             $scope.padUrl = $sce.trustAsResourceUrl(collaborativeeditor.readOnlyUrl);
         }
 
-        $scope.collaborativeeditor.session();
+        await $scope.collaborativeeditor.session();
+
+        //delay for set cookie
+        await sleep(1000);
 
         template.close('main');
         template.close('collaborativeeditor');
