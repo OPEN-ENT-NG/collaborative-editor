@@ -1,5 +1,5 @@
 {
-  "name": "net.atos~collaborative-editor~1.13.3",
+  "name": "net.atos~collaborative-editor~1.13.4",
   "config": {
     "main" : "net.atos.entng.collaborativeeditor.CollaborativeEditor",
     "port" : 8668,
