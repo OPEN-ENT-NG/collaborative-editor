@@ -9,7 +9,7 @@ pipeline {
         }
         steps {
           script {
-            def version = sh(returnStdout: true, script: 'grep \'version=\' gradle.properties  | cut -d\'=\' -f2')
+            def version = sh(returnStdout: true, script: 'docker compose run --rm maven mvn $MVN_OPTS help:evaluate -Dexpression=project.version -q -DforceStdout')
             buildName "${env.GIT_BRANCH.replace("origin/", "")}@${version}"
           }
         }
@@ -17,9 +17,14 @@ pipeline {
       stage('Build') {
         steps {
           checkout scm
-          sh './build.sh clean install publish'
+          sh './build.sh init clean install publish'
         }
       }
     }
+  post {
+    cleanup {
+      sh 'docker-compose down'
+    }
+  }
 }
 

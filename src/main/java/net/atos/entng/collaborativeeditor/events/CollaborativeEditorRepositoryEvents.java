@@ -1,38 +1,36 @@
 package net.atos.entng.collaborativeeditor.events;
 
-import com.mongodb.QueryBuilder;
 import fr.wseduc.mongodb.MongoDb;
 import fr.wseduc.mongodb.MongoQueryBuilder;
 import fr.wseduc.webutils.I18n;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
-import org.entcore.common.service.impl.MongoDbRepositoryEvents;
+import org.bson.conversions.Bson;
+import org.entcore.common.folders.impl.DocumentHelper;
 import org.entcore.common.mongodb.MongoDbConf;
-import org.entcore.common.user.RepositoryEvents;
-import org.entcore.common.utils.StringUtils;
+import org.entcore.common.service.impl.MongoDbRepositoryEvents;
 import org.entcore.common.utils.FileUtils;
 import org.entcore.common.utils.StringUtils;
-import org.entcore.common.folders.impl.DocumentHelper;
 import org.etherpad_lite_client.EPLiteClient;
 
 import java.io.File;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.mongodb.client.model.Filters.*;
 
 public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents {
 
@@ -161,14 +159,14 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 	public void exportResources(JsonArray resourcesIds, boolean exportDocuments, boolean exportSharedResources, String exportId, String userId,
 			JsonArray g, String exportPath, String locale, String host, Handler<Boolean> handler)
 	{
-		QueryBuilder findByAuthor = QueryBuilder.start("owner.userId").is(userId);
+		Bson findByAuthor = eq("owner.userId", userId);
 
-		QueryBuilder findByShared = QueryBuilder.start().or(
-			QueryBuilder.start("shared.userId").is(userId).get(),
-			QueryBuilder.start("shared.groupId").in(g).get()
+		Bson findByShared = or(
+			eq("shared.userId", userId),
+			in("shared.groupId", g)
 		);
 
-		QueryBuilder findByAuthorOrShared = exportSharedResources == false ? findByAuthor : QueryBuilder.start().or(findByAuthor.get(), findByShared.get());
+		Bson findByAuthorOrShared = exportSharedResources == false ? findByAuthor : or(findByAuthor, findByShared);
 
 		JsonObject query;
 
@@ -176,9 +174,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 			query = MongoQueryBuilder.build(findByAuthorOrShared);
 		else
 		{
-			QueryBuilder limitToResources = findByAuthorOrShared.and(
-				QueryBuilder.start("_id").in(resourcesIds).get()
-			);
+			Bson limitToResources = and(findByAuthorOrShared, in("_id", resourcesIds));
 			query = MongoQueryBuilder.build(limitToResources);
 		}
 
