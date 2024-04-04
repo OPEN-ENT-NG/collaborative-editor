@@ -20,6 +20,7 @@
 package net.atos.entng.collaborativeeditor;
 
 import fr.wseduc.cron.CronTrigger;
+import io.vertx.core.Promise;
 import net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorController;
 import net.atos.entng.collaborativeeditor.cron.NotUsingPAD;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorRepositoryEvents;
@@ -48,8 +49,8 @@ public class CollaborativeEditor extends BaseServer {
      * Entry point of the Vert.x module
      */
     @Override
-    public void start() throws Exception {
-        super.start();
+    public void start(Promise<Void> startPromise) throws Exception {
+        super.start(startPromise);
 
         MongoDbConf conf = MongoDbConf.getInstance();
         conf.setCollection(COLLABORATIVEEDITOR_COLLECTION);
