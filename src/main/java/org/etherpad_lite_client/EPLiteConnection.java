@@ -22,10 +22,8 @@ package org.etherpad_lite_client;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.*;
+import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -155,28 +153,25 @@ public class EPLiteConnection {
      * FIXME Perhaps etherpad-lite API don't support POST http verb
      */
     private void callPost(final URL url, HashMap postArgs, final Handler<JsonObject> handler) {
-        HttpClientRequest req = httpClient.post(url.toString(), new Handler<HttpClientResponse>() {
-            @Override
-            public void handle(final HttpClientResponse response) {
-                parseData(response, handler);
-            }
-        });
         JsonObject body = new JsonObject(postArgs);
-        req.putHeader("Content-Type", "application/json; charset=utf-8");
-        req.end(body.toString());
+        httpClient.request(new RequestOptions()
+                .setMethod(HttpMethod.POST)
+                .setURI(url.toString())
+                .setHeaders(new HeadersMultiMap()
+                        .add("Content-Type", "application/json; charset=utf-8")))
+                .flatMap(request -> request.send(body.toString()))
+                .onSuccess(response -> parseData(response, handler));
     }
 
     /**
      * Calls the HTTP JSON API.
      */
     private void callGet(final URL url, final Handler<JsonObject> handler) {
-        HttpClientRequest req = httpClient.get(url.toString(), new Handler<HttpClientResponse>() {
-            @Override
-            public void handle(final HttpClientResponse response) {
-                parseData(response, handler);
-            }
-        });
-        req.end();
+        httpClient.request(new RequestOptions()
+                .setMethod(HttpMethod.GET)
+                .setURI(url.toString()))
+                .flatMap(HttpClientRequest::send)
+                .onSuccess(response -> parseData(response, handler));
     }
 
     private void parseData(HttpClientResponse response, final Handler<JsonObject> handler) {
