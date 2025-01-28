@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{#i18n}}homeworks.title{{/i18n}}</title>
+    <link rel="icon" id="favicon" href="" />
+    <link rel="stylesheet" href="/assets/js/ode-explorer/style.css?v=@@VERSION" />
+    <script
+            type="module"
+            crossorigin
+            src="/assets/js/ode-explorer/index.js?v=@@VERSION"
+    ></script>
+</head>
+<body class="app-react" data-explorer-config>
+<div id="root"></div>
+<div id="portal"></div>
+
+<!-- SET INITIALISATION CONFIG -->
+<script>
+    var WORFLOW_ACCESS = "net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorController|view";
+    var WORKFLOW_CREATE = "net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorController|create";
+
+    var explorerConfig = {
+        app: "collaborativeeditor",
+        types: ["collaborativeeditor"],
+        filters: [
+          { id: "owner", defaultValue: true },
+          { id: "public", defaultValue: false },
+          { id: "shared", defaultValue: true },
+        ],
+        orders: [
+          { id: "name", defaultValue: "asc", i18n: "explorer.sorts.name" },
+          { id: "updatedAt", i18n: "explorer.sorts.updatedat" },
+        ],
+        actions: [
+          {
+            id: 'open',
+            workflow: WORFLOW_ACCESS,
+            target: 'actionbar',
+            right: 'read',
+          },
+          {
+            id: 'share',
+            workflow: WORFLOW_ACCESS,
+            target: 'actionbar',
+            right: 'manager',
+          },
+          {
+            id: 'edit',
+            workflow: WORFLOW_ACCESS,
+            target: 'actionbar',
+            right: 'manager',
+          },
+          {
+            id: 'create',
+            workflow: WORKFLOW_CREATE,
+            target: 'tree',
+          },
+          {
+            id: 'copy',
+            workflow: WORFLOW_ACCESS,
+            target: 'actionbar',
+            right: 'read',
+          },
+          {
+            id: 'move',
+            workflow: WORFLOW_ACCESS,
+            target: 'actionbar',
+            right: 'read',
+          },
+          {
+            id: 'delete',
+            workflow: WORFLOW_ACCESS,
+            target: 'actionbar',
+            right: 'read',
+          },
+        ],
+        trashActions: [
+          {
+            id: "restore",
+            available: true,
+            target: "actionbar",
+            workflow: "",
+            right: "manager",
+          },
+          {
+            id: "delete",
+            available: true,
+            target: "actionbar",
+            workflow: "",
+            right: "manager",
+          },
+        ],
+    };
+    var rootElement = document.querySelector("[data-explorer-config]");
+    rootElement.setAttribute("data-explorer-config", JSON.stringify(explorerConfig));
+</script>
+</body>
+</html>

@@ -25,7 +25,10 @@ import net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorControl
 import net.atos.entng.collaborativeeditor.cron.NotUsingPAD;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorRepositoryEvents;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorSearchingEvents;
+import net.atos.entng.collaborativeeditor.explorer.CollaborativeEditorExplorerPlugin;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
+import org.entcore.common.explorer.IExplorerPluginClient;
+import org.entcore.common.explorer.impl.ExplorerRepositoryEvents;
 import org.entcore.common.http.BaseServer;
 import org.entcore.common.http.filter.ShareAndOwner;
 import org.entcore.common.mongodb.MongoDbConf;
@@ -33,6 +36,8 @@ import org.entcore.common.notification.TimelineHelper;
 import org.entcore.common.service.impl.MongoDbSearchService;
 
 import java.text.ParseException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Server to manage collaborative editors. This class is the entry point of the Vert.x module.
@@ -41,9 +46,20 @@ import java.text.ParseException;
 public class CollaborativeEditor extends BaseServer {
 
     /**
+     * Define the Explorer application name.
+     */
+	public static final String APPLICATION = "collaborativeeditor";
+	/**
+     * Define the Explorer type.
+     */
+	public static final String TYPE = "collaborativeeditor";
+
+    /**
      * Constant to define the MongoDB collection to use with this module.
      */
     public static final String COLLABORATIVEEDITOR_COLLECTION = "collaborativeeditor";
+
+    private CollaborativeEditorExplorerPlugin explorerPlugin;
 
     /**
      * Entry point of the Vert.x module
@@ -52,21 +68,43 @@ public class CollaborativeEditor extends BaseServer {
     public void start(Promise<Void> startPromise) throws Exception {
         super.start(startPromise);
 
+        // Create Explorer plugin
+		this.explorerPlugin = CollaborativeEditorExplorerPlugin.create(securedActions);
+
+        // Mongo Conf
         MongoDbConf conf = MongoDbConf.getInstance();
+        // Set the main collection
         conf.setCollection(COLLABORATIVEEDITOR_COLLECTION);
 
         setDefaultResourceFilter(new ShareAndOwner());
 
-        final EtherpadHelper etherpadHelper = new EtherpadHelper(vertx, COLLABORATIVEEDITOR_COLLECTION, config.getJsonArray("domains"), config.getString("etherpad-url", null),
-                config.getString("etherpad-api-key", null), config.getBoolean("trust-all-certificate", true), config.getString("etherpad-domain", null), config);
-
-        addController(new CollaborativeEditorController(vertx, COLLABORATIVEEDITOR_COLLECTION, etherpadHelper));
+        final EtherpadHelper etherpadHelper = new EtherpadHelper(
+                vertx
+                , COLLABORATIVEEDITOR_COLLECTION
+                , config.getJsonArray("domains")
+                , config.getString("etherpad-url", null)
+                , config.getString("etherpad-api-key", null)
+                , config.getBoolean("trust-all-certificate", true)
+                , config.getString("etherpad-domain", null)
+                , config
+                , explorerPlugin);
+        
         // Subscribe to events published for searching
         if (config.getBoolean("searching-event", true)) {
             setSearchingEvents(new CollaborativeEditorSearchingEvents(vertx,
                     new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION)));
         }
-        setRepositoryEvents(new CollaborativeEditorRepositoryEvents(vertx,etherpadHelper));
+
+        // Create Repository Event with Explorer Proxy
+        final IExplorerPluginClient mainClient = IExplorerPluginClient.withBus(vertx, APPLICATION, TYPE);
+		final Map<String, IExplorerPluginClient> pluginClientPerCollection = new HashMap<>();
+		pluginClientPerCollection.put(COLLABORATIVEEDITOR_COLLECTION, mainClient);
+        setRepositoryEvents(new ExplorerRepositoryEvents(new CollaborativeEditorRepositoryEvents(vertx, etherpadHelper), pluginClientPerCollection, mainClient));
+        
+        // Add Controller
+        addController(new CollaborativeEditorController(COLLABORATIVEEDITOR_COLLECTION, etherpadHelper, explorerPlugin));
+
+        // Cron
         final String unusedPadCron = config.getString("unusedPadCron", "0 0 23 * * ?");
         final TimelineHelper timelineHelper = new TimelineHelper(vertx, vertx.eventBus(), config);
 
