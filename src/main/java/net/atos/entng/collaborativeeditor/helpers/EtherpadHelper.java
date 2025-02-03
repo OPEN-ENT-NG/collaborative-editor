@@ -26,9 +26,11 @@ import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.CookieHelper;
 import fr.wseduc.webutils.request.RequestUtils;
 import net.atos.entng.collaborativeeditor.CollaborativeEditor;
+import net.atos.entng.collaborativeeditor.explorer.CollaborativeEditorExplorerPlugin;
 import org.entcore.common.events.EventHelper;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
+import org.entcore.common.explorer.IdAndVersion;
 import org.entcore.common.mongodb.MongoDbControllerHelper;
 import org.entcore.common.service.CrudService;
 import org.entcore.common.service.VisibilityFilter;
@@ -73,6 +75,8 @@ public class EtherpadHelper extends MongoDbControllerHelper {
     private final CrudService etherpadCrudService;
     private final EventHelper eventHelper;
 
+    private final CollaborativeEditorExplorerPlugin explorerPlugin;
+
     /**
      * Constructor
      * @param vertx vertx
@@ -82,12 +86,16 @@ public class EtherpadHelper extends MongoDbControllerHelper {
      * @param etherpadApiKey Etherpad API key
      * @param trustAll trust all
      * @param domain domain
+     * @param config vertx config
+     * @param explorerPlugin Explorer Plugin
      */
-    public EtherpadHelper(Vertx vertx, String collection, JsonArray urlByDomain, String etherpadUrl, String etherpadApiKey, Boolean trustAll, String domain, final JsonObject config) {
+    public EtherpadHelper(Vertx vertx, String collection, JsonArray urlByDomain, String etherpadUrl, String etherpadApiKey
+            , Boolean trustAll, String domain, final JsonObject config, final CollaborativeEditorExplorerPlugin explorerPlugin) {
         super(collection);
         final EventStore eventStore = EventStoreFactory.getFactory().getEventStore(CollaborativeEditor.class.getSimpleName());
         this.eventHelper = new EventHelper(eventStore);
         this.etherpadCrudService = new MongoDbCrudService(collection);
+        this.explorerPlugin = explorerPlugin;
 
         if (StringUtils.isEmpty(etherpadApiKey)) {
             log.error("[Collaborative Editor] Error : Module property 'etherpad-api-key' must be defined");
@@ -125,40 +133,43 @@ public class EtherpadHelper extends MongoDbControllerHelper {
 
     @Override
     public void create(final HttpServerRequest request) {
-        UserUtils.getUserInfos(eb, request, new Handler<UserInfos>() {
-            @Override
-            public void handle(final UserInfos user) {
-                if (user != null) {
-                    final String text = I18n.getInstance().translate("collaborativeeditor.welcome", getHost(request), I18n.acceptLanguage(request));
+        UserUtils.getUserInfos(eb, request, user -> {
+            if (user != null) {
+                final String text = I18n.getInstance().translate("collaborativeeditor.welcome", getHost(request), I18n.acceptLanguage(request));
 
-                    createPad(getAuthDomain(request), text, new Handler<JsonObject>()
-                    {
-                        @Override
-                        public void handle(JsonObject event)
-                        {
-                            if ("ok".equals(event.getString("status")) == false)
-                                Renders.renderError(request, event);
-                            else
-                            {
-                                RequestUtils.bodyToJson(request, new Handler<JsonObject>()
-                                {
-                                    @Override
-                                    public void handle(JsonObject object)
-                                    {
-                                        object.put("epName", event.getString("epName"));
-                                        object.put("epGroupID", event.getString("epGroupID"));
-                                        object.put("locale", I18n.acceptLanguage(request));
-                                        final Handler<Either<String,JsonObject>> handler = notEmptyResponseHandler(request);
-                                        etherpadCrudService.create(object, user, eventHelper.onCreateResource(request, RESOURCE_NAME, handler));
-                                    }
-                                });
-                            }
-                        }
-                    });
-                } else {
-                    log.debug("User not found in session.");
-                    Renders.unauthorized(request);
-                }
+                createPad(getAuthDomain(request), text, event -> {
+                    if (!"ok".equals(event.getString("status"))) {
+                        Renders.renderError(request, event);
+                    } else {
+                        RequestUtils.bodyToJson(request, padData -> {
+                            padData.put("epName", event.getString("epName"));
+                            padData.put("epGroupID", event.getString("epGroupID"));
+                            padData.put("locale", I18n.acceptLanguage(request));
+
+                            etherpadCrudService.create(padData, user, res -> {
+                                if (res.isRight()) {
+                                    // Create EVENT
+                                    eventHelper.onCreateResource(request, RESOURCE_NAME);
+                                    // Notify Explorer
+                                    final JsonObject mongoCreatedPad = res.right().getValue();
+                                    final JsonObject explorerPad = padData.copy();
+                                    explorerPad
+                                            .put("_id", mongoCreatedPad.getString("_id"))
+                                            .put("version", System.currentTimeMillis());
+
+                                    final Optional<Number> folderId = Optional.ofNullable(explorerPad.getNumber("folder"));
+                                    explorerPlugin.notifyUpsert(user, explorerPad, folderId);
+                                    Renders.renderJson(request, mongoCreatedPad);
+                                } else {
+                                    Renders.renderError(request, new JsonObject().put("error", res.left().getValue()));
+                                }
+                            });
+                        });
+                    }
+                });
+            } else {
+                log.debug("User not found in session.");
+                Renders.unauthorized(request);
             }
         });
     }
@@ -454,58 +465,50 @@ public class EtherpadHelper extends MongoDbControllerHelper {
 
     @Override
     public void delete(final HttpServerRequest request) {
-        UserUtils.getUserInfos(eb, request, new Handler<UserInfos>() {
-            @Override
-            public void handle(final UserInfos user) {
-                if (user != null) {
-                    final String id = request.params().get("id");
-                    etherpadCrudService.retrieve(id, user, new Handler<Either<String, JsonObject>>() {
+        UserUtils.getUserInfos(eb, request, user -> {
+            if (user != null) {
+                final String id = request.params().get("id");
 
-                        @Override
-                        public void handle(Either<String, JsonObject> event) {
-                            if (event.isRight()) {
-                                if (event.right().getValue() != null && event.right().getValue().size() > 0) {
-                                    final JsonObject object = event.right().getValue();
-                                    etherpadCrudService.delete(id, user, new Handler<Either<String, JsonObject>>() {
-                                        @Override
-                                        public void handle(Either<String, JsonObject> event) {
-                                            if (event.isRight()) {
-                                                final EPLiteClient client = clientByDomain.get(getAuthDomain(request));
-                                                client.deletePad(object.getString("epName"), new Handler<JsonObject>() {
-                                                    @Override
-                                                    public void handle(JsonObject event) {
-                                                        if (!"ok".equals(event.getString("status"))) {
-                                                            log.error("Fail to delete a pad on backend " + event.getString("message"));
-                                                        }
-                                                    }
-                                                });
-                                                client.deleteGroup(object.getString("epGroupID"), new Handler<JsonObject>() {
-                                                    @Override
-                                                    public void handle(JsonObject event) {
-                                                        if (!"ok".equals(event.getString("status"))) {
-                                                            log.error("Fail to delete a group on backend " + event.getString("message"));
-                                                        }
-                                                    }
-                                                });
-                                                Renders.renderJson(request, event.right().getValue(), 200);
-                                            } else {
-                                                log.error("Fail to delete a pad on mongo backend from id : " + id + ", error : " + event.left().getValue());
-                                                Renders.renderError(request, new JsonObject().put("error", event.left().getValue()));
-                                            }
+                etherpadCrudService.retrieve(id, user, retrieveEvent -> {
+                    if (retrieveEvent.isRight()) {
+                        if (retrieveEvent.right().getValue() != null && !retrieveEvent.right().getValue().isEmpty()) {
+                            final JsonObject retrievedPad = retrieveEvent.right().getValue();
+
+                            etherpadCrudService.delete(id, user, crudDeleteEvent -> {
+                                if (crudDeleteEvent.isRight()) {
+                                    final EPLiteClient client = clientByDomain.get(getAuthDomain(request));
+
+                                    client.deletePad(retrievedPad.getString("epName"), clientDeletePadEvent -> {
+                                        if (!"ok".equals(clientDeletePadEvent.getString("status"))) {
+                                            log.error("Fail to delete a pad on backend " + clientDeletePadEvent.getString("message"));
                                         }
                                     });
+
+                                    client.deleteGroup(retrievedPad.getString("epGroupID"), clientDeleteGroupEvent -> {
+                                        if (!"ok".equals(clientDeleteGroupEvent.getString("status"))) {
+                                            log.error("Fail to delete a group on backend " + clientDeleteGroupEvent.getString("message"));
+                                        }
+                                    });
+
+                                    // Notify Explorer
+                                    explorerPlugin.notifyDeleteById(user, new IdAndVersion(id, System.currentTimeMillis()));
+
+                                    Renders.renderJson(request, crudDeleteEvent.right().getValue(), 200);
                                 } else {
-                                    Renders.renderError(request, new JsonObject().put("error", "Empty result from id : " + id));
+                                    log.error("Fail to delete a pad on mongo backend from id : " + id + ", error : " + crudDeleteEvent.left().getValue());
+                                    Renders.renderError(request, new JsonObject().put("error", crudDeleteEvent.left().getValue()));
                                 }
-                            } else {
-                                Renders.renderError(request, new JsonObject().put("error", event.left().getValue()));
-                            }
+                            });
+                        } else {
+                            Renders.renderError(request, new JsonObject().put("error", "Empty result from id : " + id));
                         }
-                    });
-                } else {
-                    log.debug("User not found in session.");
-                    Renders.unauthorized(request);
-                }
+                    } else {
+                        Renders.renderError(request, new JsonObject().put("error", retrieveEvent.left().getValue()));
+                    }
+                });
+            } else {
+                log.debug("User not found in session.");
+                Renders.unauthorized(request);
             }
         });
     }

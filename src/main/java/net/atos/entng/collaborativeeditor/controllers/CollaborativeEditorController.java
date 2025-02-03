@@ -25,6 +25,7 @@ import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.request.RequestUtils;
 import net.atos.entng.collaborativeeditor.CollaborativeEditor;
+import net.atos.entng.collaborativeeditor.explorer.CollaborativeEditorExplorerPlugin;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
 import org.entcore.common.events.EventHelper;
 import org.entcore.common.events.EventStore;
@@ -39,7 +40,11 @@ import org.vertx.java.core.http.RouteMatcher;
 import io.vertx.core.json.JsonObject;
 
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Controller to manage URL paths for collaborative editors.
@@ -50,31 +55,63 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
     private final EtherpadHelper etherpadHelper;
     private final EventHelper eventHelper;
 
-
-    @Override
-    public void init(Vertx vertx, JsonObject config, RouteMatcher rm, Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
-        super.init(vertx, config, rm, securedActions);
-    }
+    private CollaborativeEditorExplorerPlugin explorerPlugin;
 
     /**
      * Default constructor
-     * @param vertx vertx
      * @param collection MongoDB collection to request.
+     * @param etherpadHelper Etherpad Helper.
+     * @param explorerPlugin Plugin Explorer.
      */
-    public CollaborativeEditorController(Vertx vertx, String collection, EtherpadHelper etherpadHelper) {
+    public CollaborativeEditorController(
+            String collection
+            , EtherpadHelper etherpadHelper
+            , final CollaborativeEditorExplorerPlugin explorerPlugin) {
         super(collection);
         this.etherpadHelper = etherpadHelper;
         final EventStore eventStore = EventStoreFactory.getFactory().getEventStore(CollaborativeEditor.class.getSimpleName());
         this.eventHelper = new EventHelper(eventStore);
+        this.explorerPlugin = explorerPlugin;
+    }
+
+    @Override
+    public void init(Vertx vertx, JsonObject config, RouteMatcher rm, Map<String, fr.wseduc.webutils.security.SecuredAction> securedActions) {
+        super.init(vertx, config, rm, securedActions);
+        final Map<String, List<String>> groupedActions = new HashMap<>();
+        this.shareService = this.explorerPlugin.createShareService(groupedActions);
+    }
+
+    @Override
+    protected Function<JsonObject, Optional<String>> jsonToOwnerId() {
+        return json -> this.explorerPlugin.getCreatorForModel(json).map(UserInfos::getUserId);
     }
 
     @Get("")
     @SecuredAction("collaborativeeditor.view")
     public void view(HttpServerRequest request) {
-        renderView(request);
-
         // Create event "access to application Collaborative Editor" and store it, for module "statistics"
         eventHelper.onAccess(request);
+
+        // Get the view parameter from the request
+        final String view = request.params().get("view");
+        // Get the use-explorer-ui configuration from the config
+        final boolean useNewUi = this.config.getBoolean("use-explorer-ui", true);
+        // If the view is home, use the old ui by default
+        if ("home".equals(view)) {
+            if (useNewUi) {
+                // use new ui by default
+                renderView(request, new JsonObject(), "collaborativeeditor-explorer.html", null);
+            } else {
+                // use old ui by default
+                renderView(request);
+            }
+        } else if ("resource".equals(view)) {
+            // force new ui
+            renderView(request, new JsonObject(), "collaborativeeditor-explorer.html", null);
+        } else {
+            // use old ui by default for routing
+            renderView(request);
+        }
     }
 
     @Override
@@ -86,24 +123,50 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
     }
 
     @Override
-    @Post("")
-    @ApiDoc("Allows to create a new editor")
-    @SecuredAction("collaborativeeditor.create")
-    public void create(final HttpServerRequest request) {
-        RequestUtils.bodyToJson(request, pathPrefix + "collaborativeeditor", new Handler<JsonObject>() {
-            @Override
-            public void handle(JsonObject event) {
-                etherpadHelper.create(request);
-            }
-        });
-    }
-
-    @Override
     @Get("/:id")
     @ApiDoc("Allows to get a collaborative editor associated to the given identifier")
     @SecuredAction(value = "collaborativeeditor.read", type = ActionType.RESOURCE)
     public void retrieve(HttpServerRequest request) {
         etherpadHelper.retrieve(request);
+    }
+
+    @Override
+    @Post("")
+    @ApiDoc("Allows to create a new editor")
+    @SecuredAction("collaborativeeditor.create")
+    public void create(final HttpServerRequest request) {
+        RequestUtils.bodyToJson(
+                request
+                , pathPrefix + "collaborativeeditor"
+                , event -> etherpadHelper.create(request));
+    }
+
+    @Override
+    @Put("/:id")
+    @ApiDoc("Allows to update a collaborative editor associated to the given identifier")
+    @SecuredAction(value = "collaborativeeditor.contrib", type = ActionType.RESOURCE)
+    public void update(final HttpServerRequest request) {
+        UserUtils.getAuthenticatedUserInfos(eb, request)
+                .onSuccess(user ->
+                        RequestUtils.bodyToJson(
+                                request
+                                , pathPrefix + "collaborativeeditor"
+                                , padData -> {
+                                    CollaborativeEditorController.super.update(request); // this method renders the response
+                                    // Notify Explorer
+                                    padData.put("_id", request.params().get("id"));
+                                    padData.put("version", System.currentTimeMillis());
+                                    explorerPlugin.notifyUpsert(user, padData);
+                                }))
+                .onFailure(e -> unauthorized(request));
+    }
+
+    @Override
+    @Delete("/:id")
+    @ApiDoc("Allows to delete a collaborative editor associated to the given identifier")
+    @SecuredAction(value = "collaborativeeditor.manager", type = ActionType.RESOURCE)
+    public void delete(HttpServerRequest request) {
+        etherpadHelper.delete(request);
     }
 
     @Get("/session/:id")
@@ -118,27 +181,6 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
     @SecuredAction(value = "collaborativeeditor.read", type = ActionType.RESOURCE)
     public void deleteSession(HttpServerRequest request) {
         etherpadHelper.deleteSession(request);
-    }
-
-    @Override
-    @Put("/:id")
-    @ApiDoc("Allows to update a collaborative editor associated to the given identifier")
-    @SecuredAction(value = "collaborativeeditor.contrib", type = ActionType.RESOURCE)
-    public void update(final HttpServerRequest request) {
-        RequestUtils.bodyToJson(request, pathPrefix + "collaborativeeditor", new Handler<JsonObject>() {
-            @Override
-            public void handle(JsonObject event) {
-                CollaborativeEditorController.super.update(request);
-            }
-        });
-    }
-
-    @Override
-    @Delete("/:id")
-    @ApiDoc("Allows to delete a collaborative editor associated to the given identifier")
-    @SecuredAction(value = "collaborativeeditor.manager", type = ActionType.RESOURCE)
-    public void delete(HttpServerRequest request) {
-        etherpadHelper.delete(request);
     }
 
     @Get("/share/json/:id")

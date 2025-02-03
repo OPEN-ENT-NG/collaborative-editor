@@ -17,6 +17,9 @@
         },
         "thumbnail": {
             "type": "string"
+        },
+        "folder": {
+            "type": "number"
         }
     },
     "required": [
