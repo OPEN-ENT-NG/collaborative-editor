@@ -2,6 +2,15 @@ import {ng, routes} from 'entcore';
 
 import {CollaborativeEditorController} from "./controllers/controller";
 
+const URL = new URLSearchParams(location.search);
+const HAS_VIEW = URL.has("view");
+
+function redirectToReact() {
+    if (!HAS_VIEW) {
+        window.location.replace("/collaborativeeditor?view=home");
+    }
+}
+
 ng.controllers.push(CollaborativeEditorController);
 
 /**
@@ -13,6 +22,7 @@ routes.define(function($routeProvider){
             action: 'viewCollaborativeeditor'
         })
         .otherwise({
-            action: 'listCollaborativeeditor'
+            action: HAS_VIEW && 'listCollaborativeeditor',
+            redirectTo: redirectToReact,
         });
 });
