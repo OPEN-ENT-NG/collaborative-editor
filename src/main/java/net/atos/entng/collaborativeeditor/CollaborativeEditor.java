@@ -117,5 +117,10 @@ public class CollaborativeEditor extends BaseServer {
             //vertx.stop();
             vertx.close();
         }
+
+        // Start Explorer plugin
+        this.explorerPlugin.start();
+
+        startPromise.tryComplete();
     }
 }
