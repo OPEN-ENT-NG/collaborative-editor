@@ -26,11 +26,12 @@ export const CollaborativeEditorController: Controller = ng.controller('Collabor
     $scope.action = 'collaborativeeditor-list';
     $scope.notFound = false;
     $scope.creatingPad = false;
+    $scope.loading = false;
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     // By default open the collaborative editor list
-    template.open('collaborativeeditor', 'collaborativeeditor-list');
+    //template.open('collaborativeeditor', 'collaborativeeditor-list');
     template.open('side-panel', 'collaborativeeditor-side-panel');
 
     $scope.isEmpty = function() {
@@ -206,8 +207,8 @@ export const CollaborativeEditorController: Controller = ng.controller('Collabor
         template.close('main');
         template.close('etherpad');
         $scope.action = 'collaborativeeditor-list';
-        template.open('collaborativeeditor', 'collaborativeeditor-list');
         $scope.creatingPad = false;
+        window.open("/collaborativeeditor?view=home", "_self");
     }
 
     /**
@@ -221,8 +222,7 @@ export const CollaborativeEditorController: Controller = ng.controller('Collabor
         delete $scope.selectedCollaborativeeditor;
         $scope.action = 'collaborativeeditor-list';
         template.close('etherpad');
-        template.open('collaborativeeditor', 'collaborativeeditor-list');
-        window.location.hash = "";
+        window.open("/collaborativeeditor?view=home", "_self");
     }
 
 
@@ -345,7 +345,9 @@ export const CollaborativeEditorController: Controller = ng.controller('Collabor
          * Retrieve a collaborative editor from its database id and open it
          */
         viewCollaborativeeditor: function(params) {
+            $scope.loading = true;
             model.collaborativeEditors.sync(function() {
+                $scope.loading = false;
                 var c = _.find(model.collaborativeEditors.all, function(collaborativeeditor){
                     return collaborativeeditor._id === params.collaborativeeditorId;
                 });
@@ -363,7 +365,9 @@ export const CollaborativeEditorController: Controller = ng.controller('Collabor
          * Display the collaborative editors list
          **/
         listCollaborativeeditor: function(params){
+            $scope.loading = true;
             model.collaborativeEditors.sync(function () {
+                $scope.loading = false;
                 $scope.openMainPage();
             });
         }
