@@ -43,7 +43,7 @@
                 <div class="clear"></div>
             </div>
 
-            <section ng-if="isEmpty() && !creatingPad">
+            <section ng-if="!loading && isEmpty() && !creatingPad">
                 <div class="row">
                     <!-- Empty screen - Consultation -->
                     <div class="emptyscreen" ng-if="workflowReadOnly()">
