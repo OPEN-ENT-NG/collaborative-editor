@@ -32,7 +32,7 @@
         <web-utils.version>3.1-SNAPSHOT</web-utils.version>
         <entCoreVersion>6.5-SNAPSHOT</entCoreVersion>
         <gatlingHighchartsVersion>2.3.1</gatlingHighchartsVersion>
-        <vertxCronTimerVersion>3.0.0</vertxCronTimerVersion>
+        <vertxCronTimerVersion>3.0-SNAPSHOT</vertxCronTimerVersion>
         <jsonSimpleVersion>1.1.1</jsonSimpleVersion>
     </properties>
 
