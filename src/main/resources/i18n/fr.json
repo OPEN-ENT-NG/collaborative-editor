@@ -57,5 +57,5 @@
     "explorer.emptyScreen.txt1d.consultation": "Pads",
     "explorer.emptyScreen.txt2d.create": "Pads",
     "explorer.emptyScreen.txt2d.consultation": "Pads",
-    "explorer.tooltip.shared": "Pad partagé"
+    "tooltip.shared": "Pad partagé"
 }
