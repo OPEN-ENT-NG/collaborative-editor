@@ -23,6 +23,7 @@ import fr.wseduc.rs.*;
 import fr.wseduc.security.ActionType;
 import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.I18n;
+import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.RequestUtils;
 import net.atos.entng.collaborativeeditor.CollaborativeEditor;
 import net.atos.entng.collaborativeeditor.explorer.CollaborativeEditorExplorerPlugin;
@@ -267,6 +268,24 @@ public class CollaborativeEditorController extends MongoDbControllerHelper {
                     shareResource(request, "collaborativeeditor.share", false, params, "name");
                 }
             }
+        });
+    }
+
+    @Get("/embed/:id")
+    @ApiDoc("Allows to embed pad using name inside an iframe")
+    @SecuredAction(value = "collaborativeeditor.read", type = ActionType.RESOURCE)
+    public void embedPad(HttpServerRequest request) {
+        // Get the pad id from the request
+        final String padId = request.params().get("id");
+        // Get query parameters from the request
+        final String queryString = request.query() != null ? request.query() : "";
+        // Get etherpad-lite path url
+        final String padPath = config.getString("etherpad-path", "/pad/p");
+        // Redirect to the pad
+        final String location = String.format("%s/%s?%s", padPath, padId, queryString);
+        // Create pad session
+        etherpadHelper.createSession(request, true, Optional.of(location)).onComplete(complete -> {
+            // response already sent in createSession
         });
     }
 

@@ -26,6 +26,7 @@ import net.atos.entng.collaborativeeditor.cron.NotUsingPAD;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorRepositoryEvents;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorSearchingEvents;
 import net.atos.entng.collaborativeeditor.explorer.CollaborativeEditorExplorerPlugin;
+import net.atos.entng.collaborativeeditor.filter.CollaborativeEditorShareAndOwner;
 import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
 import org.entcore.common.explorer.IExplorerPluginClient;
 import org.entcore.common.explorer.impl.ExplorerRepositoryEvents;
@@ -76,7 +77,7 @@ public class CollaborativeEditor extends BaseServer {
         // Set the main collection
         conf.setCollection(COLLABORATIVEEDITOR_COLLECTION);
 
-        setDefaultResourceFilter(new ShareAndOwner());
+        setDefaultResourceFilter(new CollaborativeEditorShareAndOwner());
 
         final EtherpadHelper etherpadHelper = new EtherpadHelper(
                 vertx
