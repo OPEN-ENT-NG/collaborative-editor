@@ -19,19 +19,27 @@
 
 package net.atos.entng.collaborativeeditor.helpers;
 
+import com.mongodb.client.model.Filters;
+import fr.wseduc.mongodb.MongoDb;
+import fr.wseduc.mongodb.MongoQueryBuilder;
 import fr.wseduc.webutils.Either;
 import fr.wseduc.webutils.I18n;
 import fr.wseduc.webutils.Utils;
 import fr.wseduc.webutils.http.Renders;
 import fr.wseduc.webutils.request.CookieHelper;
 import fr.wseduc.webutils.request.RequestUtils;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.http.HttpServerResponse;
 import net.atos.entng.collaborativeeditor.CollaborativeEditor;
 import net.atos.entng.collaborativeeditor.explorer.CollaborativeEditorExplorerPlugin;
+import org.bson.conversions.Bson;
 import org.entcore.common.events.EventHelper;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
 import org.entcore.common.explorer.IdAndVersion;
 import org.entcore.common.mongodb.MongoDbControllerHelper;
+import org.entcore.common.mongodb.MongoDbResult;
 import org.entcore.common.service.CrudService;
 import org.entcore.common.service.VisibilityFilter;
 import org.entcore.common.service.impl.MongoDbCrudService;
@@ -57,7 +65,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.entcore.common.http.response.DefaultResponseHandler.notEmptyResponseHandler;
 
 public class EtherpadHelper extends MongoDbControllerHelper {
-    static final String RESOURCE_NAME = "pad";
+    public static final String RESOURCE_NAME = "pad";
     /**
      * Class logger
      */
@@ -76,6 +84,8 @@ public class EtherpadHelper extends MongoDbControllerHelper {
     private final EventHelper eventHelper;
 
     private final CollaborativeEditorExplorerPlugin explorerPlugin;
+    protected final MongoDb mongo;
+    protected final String collection;
 
     /**
      * Constructor
@@ -92,6 +102,8 @@ public class EtherpadHelper extends MongoDbControllerHelper {
     public EtherpadHelper(Vertx vertx, String collection, JsonArray urlByDomain, String etherpadUrl, String etherpadApiKey
             , Boolean trustAll, String domain, final JsonObject config, final CollaborativeEditorExplorerPlugin explorerPlugin) {
         super(collection);
+        this.mongo = MongoDb.getInstance();
+        this.collection = collection;
         final EventStore eventStore = EventStoreFactory.getFactory().getEventStore(CollaborativeEditor.class.getSimpleName());
         this.eventHelper = new EventHelper(eventStore);
         this.etherpadCrudService = new MongoDbCrudService(collection);
@@ -375,62 +387,66 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         });
     }
 
+    public Future<Void> createSession(final HttpServerRequest request){
+        return this.createSession(request, false, Optional.empty());
+    }
     /**
      * Create a user session on a collaborative editor
      * @param request HTTP request
      */
-    public void createSession(final HttpServerRequest request) {
-        UserUtils.getUserInfos(eb, request, new Handler<UserInfos>() {
-            @Override
-            public void handle(final UserInfos user) {
-                String id = request.params().get("id");
-                etherpadCrudService.retrieve(id, user, new Handler<Either<String, JsonObject>>() {
-
-                    @Override
-                    public void handle(Either<String, JsonObject> event) {
-                        if (event.isRight()) {
-                            if (event.right().getValue() != null && event.right().getValue().size() > 0) {
-                                final JsonObject object = event.right().getValue();
-                                final String domain = getAuthDomain(request);
-                                final EPLiteClient client = clientByDomain.get(domain);
-                                // Create author if he doesn't exists
-                                client.createAuthorIfNotExistsFor(user.getLogin(), new Handler<JsonObject>() {
-                                    @Override
-                                    public void handle(JsonObject event) {
-                                        if ("ok".equals(event.getString("status"))) {
-                                            final String authorID = event.getString("authorID");
-                                            // Create session for the user on the pad group
-                                            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Paris"));
-                                            calendar.setTime(new Date());
-                                            Date now = calendar.getTime();
-                                            long validUntil = (now.getTime() + (1 * 60L * 60L * 1000L)) / 1000L;
-                                            client.createSession(object.getString("epGroupID"), authorID, validUntil, new Handler<JsonObject>() {
-                                                @Override
-                                                public void handle(JsonObject event) {
-                                                    if ("ok".equals(event.getString("status"))) {
-                                                        final String session = event.getString("sessionID");
-                                                        request.response().putHeader("Set-Cookie", "sessionID=" + session + ";max-age=" + 360 * 1000 + ";path=/;domain=" + domain).setStatusCode(200).end();
-                                                    } else {
-                                                        Renders.renderError(request, event);
-                                                    }
-                                                }
-                                            });
+    public Future<Void> createSession(final HttpServerRequest request, final boolean byName, final Optional<String> redirectUrl) {
+        final Promise<Void> promise = Promise.promise();
+        UserUtils.getUserInfos(eb, request, user -> {
+            String id = request.params().get("id");
+            Bson idFilter = byName? Filters.eq("epName", id) : Filters.eq("_id", id);
+            mongo.findOne(collection, MongoQueryBuilder.build(idFilter), null, MongoDbResult.validResultHandler(findEvent -> {
+                if (findEvent.isRight()) {
+                    if (findEvent.right().getValue() != null && findEvent.right().getValue().size() > 0) {
+                        final JsonObject object = findEvent.right().getValue();
+                        final String domain = getAuthDomain(request);
+                        final EPLiteClient client = clientByDomain.get(domain);
+                        // Create author if he doesn't exists
+                        client.createAuthorIfNotExistsFor(user.getLogin(), createEvent -> {
+                            if ("ok".equals(createEvent.getString("status"))) {
+                                final String authorID = createEvent.getString("authorID");
+                                // Create session for the user on the pad group
+                                Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Paris"));
+                                calendar.setTime(new Date());
+                                Date now = calendar.getTime();
+                                long validUntil = (now.getTime() + (1 * 60L * 60L * 1000L)) / 1000L;
+                                client.createSession(object.getString("epGroupID"), authorID, validUntil, event -> {
+                                    if ("ok".equals(event.getString("status"))) {
+                                        final String session = event.getString("sessionID");
+                                        final HttpServerResponse response = request.response();
+                                        response.putHeader("Set-Cookie", "sessionID=" + session + ";max-age=" + 360 * 1000 + ";path=/;domain=" + domain);
+                                        if(redirectUrl.isPresent()){
+                                            Renders.redirect(request, redirectUrl.get());
                                         } else {
-                                            Renders.renderError(request, event);
+                                            response.setStatusCode(200).end();
                                         }
+                                        promise.complete();
+                                    } else {
+                                        Renders.renderError(request, event);
+                                        promise.fail(event.getString("error", "pad.session.create.failed"));
                                     }
                                 });
                             } else {
-                                request.response().setStatusCode(404).end();
+                                Renders.renderError(request, createEvent);
+                                promise.fail(createEvent.getString("error", "pad.session.create.failed"));
                             }
-                        } else {
-                            JsonObject error = new JsonObject().put("error", event.left().getValue());
-                            Renders.renderJson(request, error, 400);
-                        }
+                        });
+                    } else {
+                        request.response().setStatusCode(404).end();
+                        promise.fail("pad.notfound");
                     }
-                });
-            }
+                } else {
+                    JsonObject error = new JsonObject().put("error", findEvent.left().getValue());
+                    Renders.renderJson(request, error, 400);
+                    promise.fail(findEvent.left().getValue());
+                }
+            }));
         });
+        return promise.future();
     }
 
     /**
