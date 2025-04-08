@@ -1,6 +1,6 @@
 {
   "name": "collaborative-editor",
-  "version": "3.0-SNAPSHOTdev.1",
+  "version": "3.0-develop-pedago.0",
   "description": "Collaborative text editor application",
   "main": "gulpfile.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "test": "npm run coverage"
   },
   "dependencies": {
-    "entcore": "dev",
+    "entcore": "develop-pedago",
     "awesome-typescript-loader": "3.2.1",
     "axios": "0.16.2",
     "core-js": "2.4.1",
