@@ -31,7 +31,7 @@
     <properties>
         <entCoreVersion>6.13-SNAPSHOT</entCoreVersion>
         <gatlingHighchartsVersion>2.3.1</gatlingHighchartsVersion>
-        <vertxCronTimerVersion>3.0-SNAPSHOT</vertxCronTimerVersion>
+        <vertxCronTimerVersion>3.0-develop-b2school-SNAPSHOT</vertxCronTimerVersion>
         <jsonSimpleVersion>1.1.1</jsonSimpleVersion>
     </properties>
 
