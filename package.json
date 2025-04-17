@@ -1,6 +1,6 @@
 {
   "name": "collaborative-editor",
-  "version": "3.0.3",
+  "version": "3.0.3-dev.0",
   "description": "Collaborative text editor application",
   "main": "gulpfile.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "test": "npm run coverage"
   },
   "dependencies": {
-    "entcore": "4.8.12",
+    "entcore": "dev",
     "awesome-typescript-loader": "3.2.1",
     "axios": "0.16.2",
     "core-js": "2.4.1",
