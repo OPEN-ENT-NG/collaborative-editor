@@ -1,6 +1,6 @@
 {
   "name": "collaborative-editor",
-  "version": "3.0-develop-pedago.0",
+  "version": "3.0.0-develop-pedago.0",
   "description": "Collaborative text editor application",
   "main": "gulpfile.js",
   "scripts": {
