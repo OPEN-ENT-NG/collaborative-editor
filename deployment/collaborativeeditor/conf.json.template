@@ -16,15 +16,6 @@
     "etherpad-domain": "ip-51-255-66.eu",
     "etherpad-url": "http://ns3027012.ip-51-255-66.eu:8092",
     "etherpad-api-key" : "62cc0a3507b8ab13b3f641a07f93138d59880071af0e10f84d0f9e1937c76e97",
-    "entcore.port" : 8009,
-    "publicConf": {
-      <% if ("true".equals(xitiSwitch)) { %>
-        "xiti": {
-          "ID_SERVICE": {
-            "default": 17
-          }
-        }
-      <% } %>
-    }
+    "entcore.port" : 8009
   }
 }
