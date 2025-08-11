@@ -1,7 +1,7 @@
 # À propos de l'application PAD (collaborative-editor)
 
 * Licence : [AGPL v3](http://www.gnu.org/licenses/agpl.txt) - Copyright Région Hauts-de-France (ex Picardie)
-* Développeur(s) : ATOS, Open Digital Education
+* Développeur(s) : ATOS, Edifice
 * Financeur(s) : Région Hauts-de-France (ex Picardie)
 * Description : Application d'éditeur de texte collaboratif (Pad) qui s'appuie sur https://github.com/ether/etherpad-lite embarqué
 
