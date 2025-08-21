@@ -34,6 +34,7 @@ import org.entcore.common.http.BaseServer;
 import org.entcore.common.http.filter.ShareAndOwner;
 import org.entcore.common.mongodb.MongoDbConf;
 import org.entcore.common.notification.TimelineHelper;
+import org.entcore.common.resources.ResourceBrokerRepositoryEvents;
 import org.entcore.common.service.impl.MongoDbSearchService;
 
 import java.text.ParseException;
@@ -44,6 +45,8 @@ import org.entcore.common.share.ShareService;
 import org.entcore.common.share.impl.ShareBrokerListenerImpl;
 import org.entcore.broker.api.utils.AddressParameter;
 import org.entcore.broker.api.utils.BrokerProxyUtils;
+import org.entcore.common.user.RepositoryEvents;
+
 import java.util.List;
 
 /**
@@ -106,8 +109,9 @@ public class CollaborativeEditor extends BaseServer {
         final IExplorerPluginClient mainClient = IExplorerPluginClient.withBus(vertx, APPLICATION, TYPE);
 		final Map<String, IExplorerPluginClient> pluginClientPerCollection = new HashMap<>();
 		pluginClientPerCollection.put(COLLABORATIVEEDITOR_COLLECTION, mainClient);
-        setRepositoryEvents(new ExplorerRepositoryEvents(new CollaborativeEditorRepositoryEvents(vertx, etherpadHelper), pluginClientPerCollection, mainClient));
-        
+        final RepositoryEvents explorerRepository = new ExplorerRepositoryEvents(new CollaborativeEditorRepositoryEvents(vertx, etherpadHelper), pluginClientPerCollection, mainClient);
+        final RepositoryEvents resourceRepository = new ResourceBrokerRepositoryEvents(explorerRepository, vertx, APPLICATION, TYPE);
+        setRepositoryEvents(resourceRepository);
         // Add Controller
         addController(new CollaborativeEditorController(COLLABORATIVEEDITOR_COLLECTION, etherpadHelper, explorerPlugin));
 
