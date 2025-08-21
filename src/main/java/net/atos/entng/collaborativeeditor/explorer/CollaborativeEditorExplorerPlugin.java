@@ -7,6 +7,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 import net.atos.entng.collaborativeeditor.CollaborativeEditor;
+import org.entcore.broker.api.dto.resources.ResourcesDeletedDTO;
+import org.entcore.broker.api.publisher.BrokerPublisherFactory;
+import org.entcore.broker.api.utils.AddressParameter;
+import org.entcore.broker.proxy.ResourceBrokerPublisher;
 import org.entcore.common.explorer.ExplorerMessage;
 import org.entcore.common.explorer.ExplorerPluginFactory;
 import org.entcore.common.explorer.IExplorerPlugin;
@@ -30,6 +34,7 @@ public class CollaborativeEditorExplorerPlugin extends ExplorerPluginResourceMon
     private final Map<String, SecuredAction> securedActions;
     private final MongoClient mongoClient;
     private ShareService shareService;
+    private final ResourceBrokerPublisher resourcePublisher;
 
     protected CollaborativeEditorExplorerPlugin(
             final IExplorerPluginCommunication communication
@@ -40,6 +45,12 @@ public class CollaborativeEditorExplorerPlugin extends ExplorerPluginResourceMon
         this.mongoClient = mongoClient;
         // Set the secured actions
         this.securedActions = securedActions;
+        // Initialize resource publisher for deletion notifications
+        this.resourcePublisher = BrokerPublisherFactory.create(
+                ResourceBrokerPublisher.class,
+                communication.vertx(),
+                new AddressParameter("application", CollaborativeEditor.APPLICATION)
+        );
     }
 
     public static CollaborativeEditorExplorerPlugin create(final Map<String, SecuredAction> securedActions) throws Exception  {
@@ -139,5 +150,13 @@ public class CollaborativeEditorExplorerPlugin extends ExplorerPluginResourceMon
         author.put("userId", user.getUserId());
         author.put("displayName", user.getUsername());
         json.put("owner", author);
+    }
+    
+    protected Future<List<Boolean>> doDelete(UserInfos user, List<String> ids) {
+        return super.doDelete(user, ids).onSuccess(result -> {
+            // Notify resource deletion via broker and dont wait for completion
+            final ResourcesDeletedDTO notification = new ResourcesDeletedDTO(ids, CollaborativeEditor.TYPE);
+            resourcePublisher.notifyResourcesDeleted(notification);
+        });
     }
 }
