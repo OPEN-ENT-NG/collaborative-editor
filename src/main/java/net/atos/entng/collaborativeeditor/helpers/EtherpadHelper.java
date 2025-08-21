@@ -34,6 +34,10 @@ import io.vertx.core.http.HttpServerResponse;
 import net.atos.entng.collaborativeeditor.CollaborativeEditor;
 import net.atos.entng.collaborativeeditor.explorer.CollaborativeEditorExplorerPlugin;
 import org.bson.conversions.Bson;
+import org.entcore.broker.api.dto.resources.ResourcesDeletedDTO;
+import org.entcore.broker.api.publisher.BrokerPublisherFactory;
+import org.entcore.broker.api.utils.AddressParameter;
+import org.entcore.broker.proxy.ResourceBrokerPublisher;
 import org.entcore.common.events.EventHelper;
 import org.entcore.common.events.EventStore;
 import org.entcore.common.events.EventStoreFactory;
@@ -86,6 +90,7 @@ public class EtherpadHelper extends MongoDbControllerHelper {
     private final CollaborativeEditorExplorerPlugin explorerPlugin;
     protected final MongoDb mongo;
     protected final String collection;
+    private final ResourceBrokerPublisher resourcePublisher;
 
     /**
      * Constructor
@@ -108,6 +113,13 @@ public class EtherpadHelper extends MongoDbControllerHelper {
         this.eventHelper = new EventHelper(eventStore);
         this.etherpadCrudService = new MongoDbCrudService(collection);
         this.explorerPlugin = explorerPlugin;
+
+        // Initialize resource publisher for deletion notifications
+        this.resourcePublisher = BrokerPublisherFactory.create(
+                ResourceBrokerPublisher.class,
+                vertx,
+                new AddressParameter("application", CollaborativeEditor.APPLICATION)
+        );
 
         if (StringUtils.isEmpty(etherpadApiKey)) {
             log.error("[Collaborative Editor] Error : Module property 'etherpad-api-key' must be defined");
@@ -505,8 +517,10 @@ public class EtherpadHelper extends MongoDbControllerHelper {
                                             log.error("Fail to delete a group on backend " + clientDeleteGroupEvent.getString("message"));
                                         }
                                     });
-
-                                    // Notify Explorer
+                                    // Notify resource deletion via broker and don't wait for completion
+                                    final ResourcesDeletedDTO notification = ResourcesDeletedDTO.forSingleResource(id, CollaborativeEditor.TYPE);
+                                    resourcePublisher.notifyResourcesDeleted(notification);
+                                    // Notify EUR and and don't wait for explorer notifications to complete
                                     explorerPlugin.notifyDeleteById(user, new IdAndVersion(id, System.currentTimeMillis()));
 
                                     Renders.renderJson(request, crudDeleteEvent.right().getValue(), 200);
