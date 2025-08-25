@@ -43,7 +43,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 
 	public CollaborativeEditorRepositoryEvents(Vertx vertx, EtherpadHelper helper)
 	{
-		super(vertx);
+		super(vertx, "net-atos-entng-collaborativeeditor-controllers-CollaborativeEditorController|delete", null, null);
 		this.vertx = vertx;
 		this.helper = helper;
 	}
@@ -362,13 +362,5 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 				}
 			}
 		});
-	}
-
-	@Override
-	public void deleteGroups(JsonArray groups) {
-	}
-
-	@Override
-	public void deleteUsers(JsonArray uers) {
 	}
 }
