@@ -17,6 +17,7 @@ import org.bson.conversions.Bson;
 import org.entcore.common.folders.impl.DocumentHelper;
 import org.entcore.common.mongodb.MongoDbConf;
 import org.entcore.common.service.impl.MongoDbRepositoryEvents;
+import org.entcore.common.user.ExportResourceResult;
 import org.entcore.common.utils.FileUtils;
 import org.entcore.common.utils.StringUtils;
 import org.etherpad_lite_client.EPLiteClient;
@@ -157,7 +158,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 
 	@Override
 	public void exportResources(JsonArray resourcesIds, boolean exportDocuments, boolean exportSharedResources, String exportId, String userId,
-			JsonArray g, String exportPath, String locale, String host, Handler<Boolean> handler)
+			JsonArray g, String exportPath, String locale, String host, Handler<ExportResourceResult> handler)
 	{
 		Bson findByAuthor = eq("owner.userId", userId);
 
@@ -196,11 +197,11 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 						{
 							if (path != null)
 							{
-								exportFiles(helper.getClientFromHost(host), results, path, new HashSet<String>(), exported, handler);
+								exportFiles(helper.getClientFromHost(host), results, path, new HashSet<>(), exported, e -> new ExportResourceResult(e, path));
 							}
 							else
 							{
-								handler.handle(exported.get());
+								handler.handle(ExportResourceResult.KO);
 							}
 						}
 					});
@@ -209,7 +210,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 				{
 					log.error("Collaborative Editor : Could not proceed query " + query.encode(),
 							event.body().getString("message"));
-					handler.handle(exported.get());
+					handler.handle(ExportResourceResult.KO);
 				}
 			}
 		});
