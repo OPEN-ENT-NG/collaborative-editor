@@ -20,6 +20,7 @@
 package net.atos.entng.collaborativeeditor;
 
 import fr.wseduc.cron.CronTrigger;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorController;
 import net.atos.entng.collaborativeeditor.cron.NotUsingPAD;
@@ -67,12 +68,22 @@ public class CollaborativeEditor extends BaseServer {
      */
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
-        super.start(startPromise);
+        final Promise<Void> promise = Promise.promise();
+        super.start(promise);
+        promise.future()
+		        .compose(init -> initCollaborativeEditor())
+		        .onComplete(startPromise);
+    }
 
+    public Future<Void> initCollaborativeEditor() {
         // Create Explorer plugin
-		this.explorerPlugin = CollaborativeEditorExplorerPlugin.create(securedActions);
+	    try {
+		    this.explorerPlugin = CollaborativeEditorExplorerPlugin.create(securedActions);
+	    } catch (Exception e) {
+		    return Future.failedFuture(e);
+	    }
 
-        // Mongo Conf
+	    // Mongo Conf
         MongoDbConf conf = MongoDbConf.getInstance();
         // Set the main collection
         conf.setCollection(COLLABORATIVEEDITOR_COLLECTION);
@@ -122,6 +133,6 @@ public class CollaborativeEditor extends BaseServer {
         // Start Explorer plugin
         this.explorerPlugin.start();
 
-        startPromise.tryComplete();
+		return Future.succeededFuture();
     }
 }
