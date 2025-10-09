@@ -127,4 +127,17 @@ public class CollaborativeEditorExplorerPlugin extends ExplorerPluginResourceMon
         user.setUsername(owner.getString("displayName"));
         return Optional.ofNullable(user);
     }
+
+    @Override
+    protected String getCreatedAtColumn() {
+        return "created";
+    }
+
+    @Override
+    protected void setCreatorForModel(final UserInfos user, final JsonObject json) {
+        final JsonObject author = new JsonObject();
+        author.put("userId", user.getUserId());
+        author.put("displayName", user.getUsername());
+        json.put("owner", author);
+    }
 }
