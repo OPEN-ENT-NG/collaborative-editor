@@ -32,7 +32,6 @@ import net.atos.entng.collaborativeeditor.helpers.EtherpadHelper;
 import org.entcore.common.explorer.IExplorerPluginClient;
 import org.entcore.common.explorer.impl.ExplorerRepositoryEvents;
 import org.entcore.common.http.BaseServer;
-import org.entcore.common.http.filter.ShareAndOwner;
 import org.entcore.common.mongodb.MongoDbConf;
 import org.entcore.common.notification.TimelineHelper;
 import org.entcore.common.resources.ResourceBrokerRepositoryEvents;
@@ -85,63 +84,58 @@ public class CollaborativeEditor extends BaseServer {
     }
 
     public Future<Void> initCollaborativeEditor() {
-        // Create Explorer plugin
-	    try {
-		    this.explorerPlugin = CollaborativeEditorExplorerPlugin.create(securedActions);
-	    } catch (Exception e) {
-		    return Future.failedFuture(e);
-	    }
+        return CollaborativeEditorExplorerPlugin.create(securedActions).compose(plugin -> {
+            this.explorerPlugin = plugin;
+            // Mongo Conf
+            MongoDbConf conf = MongoDbConf.getInstance();
+            // Set the main collection
+            conf.setCollection(COLLABORATIVEEDITOR_COLLECTION);
 
-	    // Mongo Conf
-        MongoDbConf conf = MongoDbConf.getInstance();
-        // Set the main collection
-        conf.setCollection(COLLABORATIVEEDITOR_COLLECTION);
+            setDefaultResourceFilter(new CollaborativeEditorShareAndOwner());
 
-        setDefaultResourceFilter(new CollaborativeEditorShareAndOwner());
+            final EtherpadHelper etherpadHelper = new EtherpadHelper(
+                    vertx
+                    , COLLABORATIVEEDITOR_COLLECTION
+                    , config.getJsonArray("domains")
+                    , config.getString("etherpad-url", null)
+                    , config.getString("etherpad-api-key", null)
+                    , config.getBoolean("trust-all-certificate", true)
+                    , config.getString("etherpad-domain", null)
+                    , config
+                    , explorerPlugin);
 
-        final EtherpadHelper etherpadHelper = new EtherpadHelper(
-                vertx
-                , COLLABORATIVEEDITOR_COLLECTION
-                , config.getJsonArray("domains")
-                , config.getString("etherpad-url", null)
-                , config.getString("etherpad-api-key", null)
-                , config.getBoolean("trust-all-certificate", true)
-                , config.getString("etherpad-domain", null)
-                , config
-                , explorerPlugin);
-        
-        // Subscribe to events published for searching
-        if (config.getBoolean("searching-event", true)) {
-            setSearchingEvents(new CollaborativeEditorSearchingEvents(vertx,
-                    new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION)));
-        }
+            // Subscribe to events published for searching
+            if (config.getBoolean("searching-event", true)) {
+                setSearchingEvents(new CollaborativeEditorSearchingEvents(vertx,
+                        new MongoDbSearchService(COLLABORATIVEEDITOR_COLLECTION)));
+            }
 
-        // Create Repository Event with Explorer Proxy
-        final IExplorerPluginClient mainClient = IExplorerPluginClient.withBus(vertx, APPLICATION, TYPE);
-		final Map<String, IExplorerPluginClient> pluginClientPerCollection = new HashMap<>();
-		pluginClientPerCollection.put(COLLABORATIVEEDITOR_COLLECTION, mainClient);
-        final RepositoryEvents explorerRepository = new ExplorerRepositoryEvents(new CollaborativeEditorRepositoryEvents(vertx, etherpadHelper), pluginClientPerCollection, mainClient);
-        final RepositoryEvents resourceRepository = new ResourceBrokerRepositoryEvents(explorerRepository, vertx, APPLICATION, TYPE);
-        setRepositoryEvents(resourceRepository);
-        // Add Controller
-        addController(new CollaborativeEditorController(COLLABORATIVEEDITOR_COLLECTION, etherpadHelper, explorerPlugin));
+            // Create Repository Event with Explorer Proxy
+            final IExplorerPluginClient mainClient = IExplorerPluginClient.withBus(vertx, APPLICATION, TYPE);
+            final Map<String, IExplorerPluginClient> pluginClientPerCollection = new HashMap<>();
+            pluginClientPerCollection.put(COLLABORATIVEEDITOR_COLLECTION, mainClient);
+            final RepositoryEvents explorerRepository = new ExplorerRepositoryEvents(new CollaborativeEditorRepositoryEvents(vertx, etherpadHelper), pluginClientPerCollection, mainClient);
+            final RepositoryEvents resourceRepository = new ResourceBrokerRepositoryEvents(explorerRepository, vertx, APPLICATION, TYPE);
+            setRepositoryEvents(resourceRepository);
+            // Add Controller
+            addController(new CollaborativeEditorController(COLLABORATIVEEDITOR_COLLECTION, etherpadHelper, explorerPlugin));
 
-        // Cron
-        final String unusedPadCron = config.getString("unusedPadCron", "0 0 23 * * ?");
-        final TimelineHelper timelineHelper = new TimelineHelper(vertx, vertx.eventBus(), config);
+            // Cron
+            final String unusedPadCron = config.getString("unusedPadCron", "0 0 23 * * ?");
+            final TimelineHelper timelineHelper = new TimelineHelper(vertx, vertx.eventBus(), config);
 
-        try {
-            new CronTrigger(vertx, unusedPadCron).schedule(
-                    new NotUsingPAD(timelineHelper, etherpadHelper.getFirstClient(), config)
-            );
-        } catch (ParseException e) {
-            log.fatal("[Collaborative Editor] Invalid cron expression.", e);
-            //vertx.stop();
-            vertx.close();
-        }
+            try {
+                new CronTrigger(vertx, unusedPadCron).schedule(
+                        new NotUsingPAD(timelineHelper, etherpadHelper.getFirstClient(), config)
+                );
+            } catch (ParseException e) {
+                log.fatal("[Collaborative Editor] Invalid cron expression.", e);
+                //vertx.stop();
+                vertx.close();
+            }
 
-        // Start Explorer plugin
-        this.explorerPlugin.start();
+            // Start Explorer plugin
+            this.explorerPlugin.start();
         // add broker listener for workspace resources
         BrokerProxyUtils.addBrokerProxy(new ResourceBrokerListenerImpl(), vertx, new AddressParameter("application", "collaborativeeditor"));
         // add broker listener for share service
@@ -150,6 +144,7 @@ public class CollaborativeEditor extends BaseServer {
         BrokerProxyUtils.addBrokerProxy(new ShareBrokerListenerImpl(this.securedActions, shareService), vertx, new AddressParameter("application", "collaborativeeditor"));
         // Complete the start promise
 
-		return Future.succeededFuture();
+            return Future.succeededFuture();
+        });
     }
 }

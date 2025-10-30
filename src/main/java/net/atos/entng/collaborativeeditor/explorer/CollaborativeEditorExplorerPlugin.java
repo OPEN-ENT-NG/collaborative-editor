@@ -53,11 +53,11 @@ public class CollaborativeEditorExplorerPlugin extends ExplorerPluginResourceMon
         );
     }
 
-    public static CollaborativeEditorExplorerPlugin create(final Map<String, SecuredAction> securedActions) throws Exception  {
+    public static Future<CollaborativeEditorExplorerPlugin> create(final Map<String, SecuredAction> securedActions)  {
         // Create the explorer plugin using mongo
-        final IExplorerPlugin plugin = ExplorerPluginFactory.createMongoPlugin((params) ->
-                new CollaborativeEditorExplorerPlugin(params.getCommunication(), params.getDb(), securedActions));
-        return (CollaborativeEditorExplorerPlugin) plugin;
+        return ExplorerPluginFactory.createMongoPlugin((params) ->
+                new CollaborativeEditorExplorerPlugin(params.getCommunication(), params.getDb(), securedActions))
+                .map(plugin -> (CollaborativeEditorExplorerPlugin) plugin);
     }
 
     public MongoClient getMongoClient() { return mongoClient; }
