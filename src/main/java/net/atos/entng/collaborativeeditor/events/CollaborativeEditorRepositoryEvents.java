@@ -17,7 +17,7 @@ import org.bson.conversions.Bson;
 import org.entcore.common.folders.impl.DocumentHelper;
 import org.entcore.common.mongodb.MongoDbConf;
 import org.entcore.common.service.impl.MongoDbRepositoryEvents;
-import org.entcore.common.user.position.ExportResourceResult;
+import org.entcore.common.user.ExportResourceResult;
 import org.entcore.common.utils.FileUtils;
 import org.entcore.common.utils.StringUtils;
 import org.etherpad_lite_client.EPLiteClient;
