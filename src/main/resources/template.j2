@@ -1,0 +1,28 @@
+{
+  "name": "net.atos~collaborative-editor",
+  "config": {
+    "main": "net.atos.entng.collaborativeeditor.CollaborativeEditor",
+    "port": 8668,
+    "max-pool-size": {{ etherPadPoolSize|default('5') }},
+    {% if etherPadInnerUri is defined %}"internal-uri": "{{etherPadInnerUri}}",{% endif %}
+    "csrf-token": {{ csrfToken | default('true') }},
+    "app-name": "Collaborative Editor",
+    "app-address": "/collaborativeeditor",
+    "app-icon": "pad-large",
+    "app-type" : "END_USER",
+    "host": "https://{{ host }}",
+    "ssl": true,
+    "userbook-host": "https://{{ host }}",
+    "integration-mode": "{{ integration_mode|default('HTTP') }}",
+    "app-registry.port": 8012,
+    "mode": "prod",
+    "domains": {{ collaborativeEditorDomains }},
+    "etherpad-api-key": "{{ pf_credentials_etherpad_key }}",
+    {% if ha is defined and ha and inventory_hostname_short is defined and inventory_hostname_short != 'jobs' %}
+      "unusedPadCron": "0 0 23 * * ? 2099",
+    {% else %}
+      "unusedPadCron": "0 0 23 * * ? *",
+    {% endif %}
+    "entcore.port": 8009
+  }
+}
