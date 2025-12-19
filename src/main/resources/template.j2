@@ -18,10 +18,8 @@
     "mode": "prod",
     "domains": {{ collaborativeEditorDomains }},
     "etherpad-api-key": "{{ pf_credentials_etherpad_key }}",
-    {% if ha is defined and ha and inventory_hostname_short is defined and inventory_hostname_short != 'jobs' %}
+    {% if ha and inventory_hostname_short != 'jobs' %}
       "unusedPadCron": "0 0 23 * * ? 2099",
-    {% else %}
-      "unusedPadCron": "0 0 23 * * ? *",
     {% endif %}
     "entcore.port": 8009
   }
