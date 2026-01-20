@@ -197,7 +197,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 						{
 							if (path != null)
 							{
-								exportFiles(helper.getClientFromHost(host), results, path, new HashSet<>(), exported, e -> new ExportResourceResult(e, path));
+								exportFiles(helper.getClientFromHost(host), results, path, new HashSet<>(), exported, e -> handler.handle(new ExportResourceResult(e, path)));
 							}
 							else
 							{
