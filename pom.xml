@@ -12,7 +12,7 @@
 
     <groupId>net.atos</groupId>
     <artifactId>collaborative-editor</artifactId>
-    <version>3.3-SNAPSHOT</version>
+    <version>3.3-separation-SNAPSHOT</version>
 
     <scm>
         <connection>scm:git:https://github.com/OPEN-ENT-NG/collaborative-editor.git</connection>
@@ -29,7 +29,8 @@
     </repositories>
 
     <properties>
-        <entCoreVersion>6.14-SNAPSHOT</entCoreVersion>
+        <entCoreVersion>6.14-separation-SNAPSHOT</entCoreVersion>
+        <entCoreLibsVersion>6.14-separation-SNAPSHOT</entCoreLibsVersion>
         <gatlingHighchartsVersion>2.3.1</gatlingHighchartsVersion>
         <vertxCronTimerVersion>3.0-SNAPSHOT</vertxCronTimerVersion>
         <jsonSimpleVersion>1.1.1</jsonSimpleVersion>
@@ -45,7 +46,7 @@
         <dependency>
             <groupId>org.entcore</groupId>
             <artifactId>common</artifactId>
-            <version>${entCoreVersion}</version>
+            <version>${entCoreLibsVersion}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -67,10 +68,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.gatling.highcharts</groupId>
-            <artifactId>gatling-charts-highcharts</artifactId>
-            <version>${gatlingHighchartsVersion}</version>
-            <scope>test</scope>
+            <groupId>org.entcore</groupId>
+            <artifactId>session</artifactId>
+            <version>${entCoreLibsVersion}</version>
+            <scope>runtime</scope>
+            <classifier>fat</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.entcore</groupId>
+            <artifactId>workspace</artifactId>
+            <version>${entCoreVersion}</version>
+            <scope>runtime</scope>
+            <classifier>fat</classifier>
         </dependency>
     </dependencies>
 
