@@ -1,6 +1,8 @@
 package net.atos.entng.collaborativeeditor.controllers;
 
 import fr.wseduc.rs.Post;
+import fr.wseduc.security.ActionType;
+import fr.wseduc.security.SecuredAction;
 import fr.wseduc.webutils.http.BaseController;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.logging.Logger;
@@ -17,6 +19,7 @@ public class TaskController extends BaseController {
 	}
 
 	@Post("api/internal/check/not-using-pad")
+	@SecuredAction(value = "", type = ActionType.RESOURCE)
 	public void checkNotUsingPAD(final HttpServerRequest request) {
 		log.info("Triggered check not using pad task");
 		notUsingPADTask.handle(0L);
