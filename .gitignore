@@ -40,3 +40,4 @@ gradle*
 src/main/resources/public/js/behaviours.js
 .env
 dependency-reduced-pom.xml
+edifice
