@@ -23,6 +23,7 @@ import fr.wseduc.cron.CronTrigger;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import net.atos.entng.collaborativeeditor.controllers.CollaborativeEditorController;
+import net.atos.entng.collaborativeeditor.controllers.TaskController;
 import net.atos.entng.collaborativeeditor.cron.NotUsingPAD;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorRepositoryEvents;
 import net.atos.entng.collaborativeeditor.events.CollaborativeEditorSearchingEvents;
@@ -120,14 +121,16 @@ public class CollaborativeEditor extends BaseServer {
             // Add Controller
             addController(new CollaborativeEditorController(COLLABORATIVEEDITOR_COLLECTION, etherpadHelper, explorerPlugin));
 
-            // Cron
+            // Cron task to check not using pad and send notification to users
             final String unusedPadCron = config.getString("unusedPadCron", "0 0 23 * * ?");
             final TimelineHelper timelineHelper = new TimelineHelper(vertx, vertx.eventBus(), config);
+            final NotUsingPAD notUsingPADTask = new NotUsingPAD(timelineHelper, etherpadHelper.getFirstClient(), config);
 
+            // Enable not using pad task to be triggered via API
+            addController(new TaskController(notUsingPADTask));
+            // Schedule not using pad task from cron expression
             try {
-                new CronTrigger(vertx, unusedPadCron).schedule(
-                        new NotUsingPAD(timelineHelper, etherpadHelper.getFirstClient(), config)
-                );
+                new CronTrigger(vertx, unusedPadCron).schedule(notUsingPADTask);
             } catch (ParseException e) {
                 log.fatal("[Collaborative Editor] Invalid cron expression.", e);
                 //vertx.stop();
