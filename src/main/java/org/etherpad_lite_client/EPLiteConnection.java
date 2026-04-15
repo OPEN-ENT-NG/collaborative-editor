@@ -160,7 +160,11 @@ public class EPLiteConnection {
                 .setHeaders(new HeadersMultiMap()
                         .add("Content-Type", "application/json; charset=utf-8")))
                 .flatMap(request -> request.send(body.toString()))
-                .onSuccess(response -> parseData(response, handler));
+                .onSuccess(response -> parseData(response, handler))
+                .onFailure(th -> {
+                    log.error("Error while calling Pad on url [POST] " + url, th);
+                    handler.handle(new JsonObject().put("status", "error").put("message", th.getMessage()));
+                });
     }
 
     /**
@@ -171,7 +175,11 @@ public class EPLiteConnection {
                 .setMethod(HttpMethod.GET)
                 .setURI(url.toString()))
                 .flatMap(HttpClientRequest::send)
-                .onSuccess(response -> parseData(response, handler));
+                .onSuccess(response -> parseData(response, handler))
+                .onFailure(th -> {
+                    log.error("Error while calling Pad on url [GET] " + url, th);
+                    handler.handle(new JsonObject().put("status", "error").put("message", th.getMessage()));
+                });
     }
 
     private void parseData(HttpClientResponse response, final Handler<JsonObject> handler) {
