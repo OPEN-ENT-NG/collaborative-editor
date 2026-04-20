@@ -55,7 +55,7 @@ public class CollaborativeEditorRepositoryEvents extends MongoDbRepositoryEvents
 		final String path = exportPath + File.separator
 				+ I18n.getInstance().translate("collaborativeeditor.title", I18n.DEFAULT_DOMAIN, locale);
 
-		vertx.fileSystem().mkdir(path, new Handler<AsyncResult<Void>>()
+		vertx.fileSystem().mkdirs(path, new Handler<AsyncResult<Void>>()
 		{
 			@Override
 			public void handle(AsyncResult<Void> event)
