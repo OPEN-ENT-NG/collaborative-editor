@@ -1,6 +1,6 @@
 {
   "name": "collaborative-editor",
-  "version": "3.3.6-dev.0",
+  "version": "3.3.6-dev.1",
   "description": "Collaborative text editor application",
   "main": "gulpfile.js",
   "scripts": {
