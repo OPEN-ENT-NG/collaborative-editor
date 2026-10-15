@@ -25,7 +25,7 @@
     </repository>
   </repositories>
   <properties>
-    <entCoreVersion>6.16-develop-pedago-SNAPSHOT</entCoreVersion>
+    <entCoreVersion>6.17-develop-pedago-SNAPSHOT</entCoreVersion>
     <entCoreLibsVersion>6.16-develop-pedago-SNAPSHOT</entCoreLibsVersion>
     <gatlingHighchartsVersion>2.3.1</gatlingHighchartsVersion>
     <vertxCronTimerVersion>3.0-SNAPSHOT</vertxCronTimerVersion>
